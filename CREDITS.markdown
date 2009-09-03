@@ -1,3 +1,9 @@
+AppReviews Icon
+---------------
+Icon provided by Fabio Jung:
+
+[http://www.itouchfactory.com](http://www.itouchfactory.com)
+
 Flag Icons
 ----------
 All flag icons are provided by Icon Drawer:

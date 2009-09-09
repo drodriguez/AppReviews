@@ -51,7 +51,7 @@
 @implementation ARAppStoreApplicationDetails
 
 @synthesize appIdentifier, storeIdentifier, category, categoryIdentifier, ratingCountAll, ratingCountCurrent, ratingAll, ratingCurrent, reviewCountAll, reviewCountCurrent, lastSortOrder, lastUpdated;
-@synthesize released, appVersion, appSize, localPrice, appName, appCompany, companyURL, companyURLTitle, supportURL, supportURLTitle;
+@synthesize released, appVersion, appSize, localPrice, appName, appCompany, companyURL, companyURLTitle, supportURL, supportURLTitle, appIconURL;
 @synthesize ratingCountAll5Stars, ratingCountAll4Stars, ratingCountAll3Stars, ratingCountAll2Stars, ratingCountAll1Star;
 @synthesize ratingCountCurrent5Stars, ratingCountCurrent4Stars, ratingCountCurrent3Stars, ratingCountCurrent2Stars, ratingCountCurrent1Star;
 @synthesize hasNewRatings, hasNewReviews, state, primaryKey, database;
@@ -95,6 +95,7 @@
 		self.companyURLTitle = nil;
 		self.supportURL = nil;
 		self.supportURLTitle = nil;
+		self.appIconURL = nil;
 		self.lastSortOrder = (ARReviewsSortOrder) [[NSUserDefaults standardUserDefaults] integerForKey:@"sortOrder"];
 		self.lastUpdated = [NSDate distantPast];
 		self.hasNewRatings = NO;
@@ -121,6 +122,7 @@
 	[companyURLTitle release];
 	[supportURL release];
 	[supportURLTitle release];
+	[appIconURL release];
 	[lastUpdated release];
 	[database release];
 	[super dealloc];
@@ -201,7 +203,7 @@
 {
 	self.database = db;
 
-	if ([db executeUpdate:@"INSERT INTO application_details (app_identifier, store_identifier, category, category_identifier, rating_count_all, rating_count_all_5stars, rating_count_all_4stars, rating_count_all_3stars, rating_count_all_2stars, rating_count_all_1star, rating_count_current, rating_count_current_5stars, rating_count_current_4stars, rating_count_current_3stars, rating_count_current_2stars, rating_count_current_1star, rating_all, rating_current, review_count_all, review_count_current, last_sort_order, last_updated, released, version, size, price, name, company, company_url, company_url_title, support_url, support_url_title) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+	if ([db executeUpdate:@"INSERT INTO application_details (app_identifier, store_identifier, category, category_identifier, rating_count_all, rating_count_all_5stars, rating_count_all_4stars, rating_count_all_3stars, rating_count_all_2stars, rating_count_all_1star, rating_count_current, rating_count_current_5stars, rating_count_current_4stars, rating_count_current_3stars, rating_count_current_2stars, rating_count_current_1star, rating_all, rating_current, review_count_all, review_count_current, last_sort_order, last_updated, released, version, size, price, name, company, company_url, company_url_title, support_url, support_url_title, app_icon_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
 		 appIdentifier,
 		 storeIdentifier,
 		 category,
@@ -233,7 +235,8 @@
 		 companyURL,
 		 companyURLTitle,
 		 supportURL,
-		 supportURLTitle])
+		 supportURLTitle,
+		 appIconURL])
 	{
 		primaryKey = [db lastInsertRowId];
 	}
@@ -254,7 +257,7 @@
 {
     if (dirty)
 	{
-		if (![database executeUpdate:@"UPDATE application_details SET app_identifier=?, store_identifier=?, category=?, category_identifier=?, rating_count_all=?, rating_count_all_5stars=?, rating_count_all_4stars=?, rating_count_all_3stars=?, rating_count_all_2stars=?, rating_count_all_1star=?, rating_count_current=?, rating_count_current_5stars=?, rating_count_current_4stars=?, rating_count_current_3stars=?, rating_count_current_2stars=?, rating_count_current_1star=?, rating_all=?, rating_current=?, review_count_all=?, review_count_current=?, last_sort_order=?, last_updated=?, released=?, version=?, size=?, price=?, name=?, company=?, company_url=?, company_url_title=?, support_url=?, support_url_title=? WHERE id=?",
+		if (![database executeUpdate:@"UPDATE application_details SET app_identifier=?, store_identifier=?, category=?, category_identifier=?, rating_count_all=?, rating_count_all_5stars=?, rating_count_all_4stars=?, rating_count_all_3stars=?, rating_count_all_2stars=?, rating_count_all_1star=?, rating_count_current=?, rating_count_current_5stars=?, rating_count_current_4stars=?, rating_count_current_3stars=?, rating_count_current_2stars=?, rating_count_current_1star=?, rating_all=?, rating_current=?, review_count_all=?, review_count_current=?, last_sort_order=?, last_updated=?, released=?, version=?, size=?, price=?, name=?, company=?, company_url=?, company_url_title=?, support_url=?, support_url_title=?, app_icon_url=? WHERE id=?",
 			  appIdentifier,
 			  storeIdentifier,
 			  category,
@@ -287,6 +290,7 @@
 			  companyURLTitle,
 			  supportURL,
 			  supportURLTitle,
+			  appIconURL,
 			  [NSNumber numberWithInteger:primaryKey]])
 		{
 			NSString *message = [NSString stringWithFormat:@"Failed to save ARAppStoreApplicationDetails with message '%@'.", [database lastErrorMessage]];
@@ -306,7 +310,7 @@
     if (hydrated)
 		return;
 
-	FMResultSet *row = [database executeQuery:@"SELECT released, version, size, price, name, company, company_url, company_url_title, support_url, support_url_title FROM application_details WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
+	FMResultSet *row = [database executeQuery:@"SELECT released, version, size, price, name, company, company_url, company_url_title, support_url, support_url_title, app_icon_url FROM application_details WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
 	if (row && [row next])
 	{
 		self.released = [row stringForColumnIndex:0];
@@ -319,6 +323,7 @@
 		self.companyURLTitle = [row stringForColumnIndex:7];
 		self.supportURL = [row stringForColumnIndex:8];
 		self.supportURLTitle = [row stringForColumnIndex:9];
+		self.appIconURL = [row stringForColumnIndex:10];
 	}
 	else
 	{
@@ -333,6 +338,7 @@
 		self.companyURLTitle = nil;
 		self.supportURL = nil;
 		self.supportURLTitle = nil;
+		self.appIconURL = nil;
 	}
 	[row close];
 
@@ -368,6 +374,8 @@
 	supportURL = nil;
 	[supportURLTitle release];
 	supportURLTitle = nil;
+	[appIconURL release];
+	appIconURL = nil;
     // Update the object state with respect to hydration.
     hydrated = NO;
 }
@@ -690,6 +698,16 @@
 	dirty = YES;
 	[supportURLTitle release];
 	supportURLTitle = [aString copy];
+}
+
+- (void)setAppIconURL:(NSString *)aString
+{
+	if ((!appIconURL && !aString) || (appIconURL && aString && [appIconURL isEqualToString:aString]))
+		return;
+	
+	dirty = YES;
+	[appIconURL release];
+	appIconURL = [aString copy];
 }
 
 @end

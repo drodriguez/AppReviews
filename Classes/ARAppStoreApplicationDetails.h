@@ -86,6 +86,7 @@ typedef enum
 	NSString *companyURLTitle;
 	NSString *supportURL;
 	NSString *supportURLTitle;
+	NSString *appIconURL;
 
 	// Non-persistent members.
 	BOOL hasNewRatings;
@@ -134,6 +135,7 @@ typedef enum
 @property (nonatomic, copy) NSString *companyURLTitle;
 @property (nonatomic, copy) NSString *supportURL;
 @property (nonatomic, copy) NSString *supportURLTitle;
+@property (nonatomic, copy) NSString *appIconURL;
 
 @property (nonatomic, assign) BOOL hasNewRatings;
 @property (nonatomic, assign) BOOL hasNewReviews;

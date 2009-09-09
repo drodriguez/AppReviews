@@ -5,7 +5,7 @@ CREATE TABLE "application"
     "company" TEXT,
     "app_identifier" TEXT NOT NULL,
     "default_store_identifier" TEXT NOT NULL,
-	"position" INTEGER DEFAULT -1
+    "position" INTEGER DEFAULT -1
 );
 
 CREATE TABLE "application_details"
@@ -37,10 +37,11 @@ CREATE TABLE "application_details"
     "rating_count_current_1star" INTEGER DEFAULT 0,
     "rating_current" REAL DEFAULT 0,
     "review_count_current" INTEGER DEFAULT 0,
-	"company_url" TEXT,
-	"company_url_title" TEXT,
-	"support_url" TEXT,
-	"support_url_title" TEXT,
+    "company_url" TEXT,
+    "company_url_title" TEXT,
+    "support_url" TEXT,
+    "support_url_title" TEXT,
+    "app_icon_url" TEXT,
     "last_sort_order" INTEGER,
     "last_updated" DATETIME
 );

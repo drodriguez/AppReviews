@@ -44,7 +44,7 @@
 @implementation ARAppStoreApplicationDetailsImporter
 
 @synthesize appIdentifier, storeIdentifier, category, categoryIdentifier, ratingCountAll, ratingCountCurrent, ratingAll, ratingCurrent, reviewCountAll, reviewCountCurrent, lastSortOrder, lastUpdated;
-@synthesize released, appVersion, appSize, localPrice, appName, appCompany, companyURL, companyURLTitle, supportURL, supportURLTitle;
+@synthesize released, appVersion, appSize, localPrice, appName, appCompany, companyURL, companyURLTitle, supportURL, supportURLTitle, appIconURL;
 @synthesize ratingCountAll5Stars, ratingCountAll4Stars, ratingCountAll3Stars, ratingCountAll2Stars, ratingCountAll1Star;
 @synthesize ratingCountCurrent5Stars, ratingCountCurrent4Stars, ratingCountCurrent3Stars, ratingCountCurrent2Stars, ratingCountCurrent1Star;
 @synthesize hasNewReviews, importState;
@@ -203,6 +203,7 @@
 	receiver.companyURLTitle = self.companyURLTitle;
 	receiver.supportURL = self.supportURL;
 	receiver.supportURLTitle = self.supportURLTitle;
+	receiver.appIconURL = self.appIconURL;
 }
 
 
@@ -535,21 +536,28 @@
 	{
 		switch (xmlState)
 		{
-			case DetailsSeekingCategory:
+			case DetailsSeekingCompanyName:
 			{
 				NSString *url = [attributeDict objectForKey:@"url"];
 				NSString *value = [attributeDict objectForKey:@"draggingName"];
-				if (value)
-				{
-					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
+				if (value) {
 					NSRange viewArtistQuery = [url rangeOfString:@"viewArtist?"];
-					if (viewArtistQuery.location != NSNotFound)
-					{
+					if (viewArtistQuery.location != NSNotFound) {
 						self.appCompany = value;
+						xmlState = DetailsSeekingAppName;
 					}
-					else if (viewSoftwareQuery.location != NSNotFound)
-					{
+				}
+				break;
+			}
+			case DetailsSeekingAppName:
+			{
+				NSString *url = [attributeDict objectForKey:@"url"];
+				NSString *value = [attributeDict objectForKey:@"draggingName"];
+				if (value) {
+					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
+					if (viewSoftwareQuery.location != NSNotFound) {
 						self.appName = value;
+						xmlState = DetailsSeekingAppIcon;
 					}
 				}
 				break;
@@ -573,6 +581,20 @@
 						// URL is for all version reviews.
 						xmlState = DetailsSeekingAllReviewsCount;
 					}
+				}
+				break;
+			}
+		}
+	}
+	else if ([elementNameLower isEqualToString:@"pictureview"])
+	{
+		switch (xmlState) {
+			case DetailsSeekingAppIcon:
+			{
+				GTMRegex *regex = [GTMRegex regexWithPattern:@" artwork$"];
+				if ([regex matchesSubStringInString:[attributeDict objectForKey:@"alt"]]) {
+					self.appIconURL = [attributeDict objectForKey:@"url"];
+					xmlState = DetailsSeekingCategory;
 				}
 				break;
 			}
@@ -637,7 +659,7 @@
 					if (([substrings count] > 0) && ([substrings objectAtIndex:0] != [NSNull null]) && ([substrings objectAtIndex:1] != [NSNull null]))
 					{
 						self.categoryIdentifier = [substrings objectAtIndex:1];
-						xmlState = DetailsSeekingCategory;
+						xmlState = DetailsSeekingCompanyName;
 					}
 					else
 						xmlState = DetailsSeekingAppGenre;

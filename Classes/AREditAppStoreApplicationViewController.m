@@ -75,25 +75,25 @@
 - (void)viewDidLoad
 {
 	PSLogDebug(@"");
-    [super viewDidLoad];
-
-    // Add navigation item buttons.
-    UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave
+	[super viewDidLoad];
+	
+	// Add navigation item buttons.
+	UIBarButtonItem *saveItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemSave
 																			  target:self action:@selector(save:)];
-    self.navigationItem.rightBarButtonItem = saveItem;
+	self.navigationItem.rightBarButtonItem = saveItem;
 	saveButton = [saveItem retain];
-    [saveItem release];
-    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+	[saveItem release];
+	UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
 																				target:self action:@selector(cancel:)];
-    self.navigationItem.leftBarButtonItem = cancelItem;
-    [cancelItem release];
-
-    // Adjust the fonts.
-    appId.font = [UIFont boldSystemFontOfSize:16];
-    label.font = [UIFont systemFontOfSize:14];
-
-    // Set the view background to match the grouped tables in the other views.
-    self.view.backgroundColor = [UIColor groupTableViewBackgroundColor];
+	self.navigationItem.leftBarButtonItem = cancelItem;
+	[cancelItem release];
+	
+	// Adjust the fonts.
+	appId.font = [UIFont boldSystemFontOfSize:16];
+	label.font = [UIFont systemFontOfSize:14];
+	
+	// Set the view background to match the grouped tables in the other views.
+	self.view.backgroundColor = [UIColor groupTableViewBackgroundColor];
 
 	if (app)
 	{
@@ -217,6 +217,7 @@
 				app.defaultStoreIdentifier = detailsImporter.storeIdentifier;
 				app.name = detailsImporter.appName;
 				app.company = detailsImporter.appCompany;
+				app.appIconURL = detailsImporter.appIconURL;
 
 				if (previousAppId)
 				{

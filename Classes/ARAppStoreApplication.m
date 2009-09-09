@@ -50,7 +50,7 @@
 
 @implementation ARAppStoreApplication
 
-@synthesize name, company, appIdentifier, defaultStoreIdentifier, position, primaryKey, database, updateOperationsCount;
+@synthesize name, company, appIdentifier, defaultStoreIdentifier, appIconURL, position, primaryKey, database, updateOperationsCount;
 
 - (id)init
 {
@@ -76,6 +76,7 @@
 		self.company = inCompany;
 		self.appIdentifier = inAppIdentifier;
 		self.defaultStoreIdentifier = inStoreIdentifier;
+		self.appIconURL = nil;
 		self.position = -1;
 		self.database = nil;
 		updateOperationsQueue = [[NSOperationQueue alloc] init];
@@ -93,6 +94,7 @@
 	[company release];
 	[appIdentifier release];
 	[defaultStoreIdentifier release];
+	[appIconURL release];
 	[database release];
 	[updateOperationsQueue release];
 	[super dealloc];
@@ -133,8 +135,8 @@
 - (void)insertIntoDatabase:(FMDatabase *)db
 {
 	self.database = db;
-	if ([db executeUpdate:@"INSERT INTO application (name, company, app_identifier, default_store_identifier, position) VALUES (?,?,?,?,?)",
-		 name, company, appIdentifier, defaultStoreIdentifier, [NSNumber numberWithInteger:position]])
+	if ([db executeUpdate:@"INSERT INTO application (name, company, app_identifier, default_store_identifier, app_icon_url, position) VALUES (?,?,?,?,?,?)",
+		 name, company, appIdentifier, defaultStoreIdentifier, appIconURL, [NSNumber numberWithInteger:position]])
 	{
 		primaryKey = [db lastInsertRowId];
 	}
@@ -155,7 +157,7 @@
 {
     if (dirty)
 	{
-		if (![database executeUpdate:@"UPDATE application SET name=?, company=?, app_identifier=?, default_store_identifier=?, position=? WHERE id=?", name, company, appIdentifier, defaultStoreIdentifier, [NSNumber numberWithInteger:position], [NSNumber numberWithInteger:primaryKey]])
+		if (![database executeUpdate:@"UPDATE application SET name=?, company=?, app_identifier=?, default_store_identifier=?, app_icon_url=?, position=? WHERE id=?", name, company, appIdentifier, defaultStoreIdentifier, appIconURL, [NSNumber numberWithInteger:position], [NSNumber numberWithInteger:primaryKey]])
 		{
 			NSString *message = [NSString stringWithFormat:@"Failed to save ARAppStoreApplication with message '%@'.", [database lastErrorMessage]];
 			PSLogError(message);
@@ -174,12 +176,13 @@
     if (hydrated)
 		return;
 
-	FMResultSet *row = [database executeQuery:@"SELECT name, company, default_store_identifier FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
+	FMResultSet *row = [database executeQuery:@"SELECT name, company, default_store_identifier, app_icon_url FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
 	if (row && [row next])
 	{
 		self.name = [row stringForColumnIndex:0];
 		self.company = [row stringForColumnIndex:1];
 		self.defaultStoreIdentifier = [row stringForColumnIndex:2];
+		self.appIconURL = [row stringForColumnIndex:3];
 	}
 	else
 	{
@@ -187,6 +190,7 @@
 		self.name = nil;
 		self.company = nil;
 		self.defaultStoreIdentifier = kDefaultStoreId;
+		self.appIconURL = nil;
 	}
 	[row close];
 
@@ -200,16 +204,18 @@
 	// Write any changes to the database.
 	[self save];
 
-    // Release member variables to reclaim memory. Set to nil to avoid over-releasing them
-    // if dehydrate is called multiple times.
+	// Release member variables to reclaim memory. Set to nil to avoid over-releasing them
+	// if dehydrate is called multiple times.
 	[name release];
 	name = nil;
 	[company release];
 	company = nil;
 	[defaultStoreIdentifier release];
 	defaultStoreIdentifier = nil;
-    // Update the object state with respect to hydration.
-    hydrated = NO;
+	[appIconURL release];
+	appIconURL = nil;
+	// Update the object state with respect to hydration.
+	hydrated = NO;
 }
 
 // Remove the object completely from the database. In memory deletion to follow...
@@ -353,6 +359,16 @@
     dirty = YES;
     [defaultStoreIdentifier release];
     defaultStoreIdentifier = [aString copy];
+}
+
+- (void)setAppIconURL:(NSString *)aString
+{
+	if ((!appIconURL && !aString) || (appIconURL && aString && [appIconURL isEqualToString:aString]))
+		return;
+	
+	dirty = YES;
+	[appIconURL release];
+	appIconURL = [aString copy];
 }
 
 - (void)setPosition:(NSInteger)anInt

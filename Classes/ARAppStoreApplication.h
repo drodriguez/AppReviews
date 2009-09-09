@@ -51,15 +51,16 @@
 	NSString *name;
 	NSString *company;
 	NSString *defaultStoreIdentifier;
-
-    // Opaque reference to the underlying database.
-    FMDatabase *database;
-    // Primary key in the database.
-    NSInteger primaryKey;
-    // Hydrated tracks whether attribute data is in the object or the database.
-    BOOL hydrated;
-    // Dirty tracks whether there are in-memory changes to data which have no been written to the database.
-    BOOL dirty;
+	NSString *appIconURL;
+	
+	// Opaque reference to the underlying database.
+	FMDatabase *database;
+	// Primary key in the database.
+	NSInteger primaryKey;
+	// Hydrated tracks whether attribute data is in the object or the database.
+	BOOL hydrated;
+	// Dirty tracks whether there are in-memory changes to data which have no been written to the database.
+	BOOL dirty;
 	// NSOperationQueue for all downloads related to this app.
 	NSOperationQueue *updateOperationsQueue;
 	NSUInteger updateOperationsCount;
@@ -69,6 +70,7 @@
 @property (nonatomic, copy) NSString *company;
 @property (nonatomic, copy) NSString *appIdentifier;
 @property (nonatomic, copy) NSString *defaultStoreIdentifier;
+@property (nonatomic, copy) NSString *appIconURL;
 @property (nonatomic, assign) NSInteger position;
 @property (nonatomic, assign, readonly) NSInteger primaryKey;
 @property (nonatomic, readonly) NSUInteger updateOperationsCount;

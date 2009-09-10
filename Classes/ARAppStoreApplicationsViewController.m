@@ -225,6 +225,12 @@
 		cell.detailTextLabel.text = app.company;
 	else
 		cell.detailTextLabel.text = @"Waiting for first update";
+	
+	if (app.appIconURL)
+		cell.imageView.image = app.appIcon;
+	else
+		cell.imageView.image = nil;
+
 
 	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 

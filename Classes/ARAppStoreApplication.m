@@ -528,7 +528,7 @@ static NSString *cacheDirectoryPath() {
 }
 
 - (UIImage *)appIcon {
-	if (!appIcon) {
+	if (appIconURL && !appIcon) {
 		if (!(appIcon = [[self loadIconFromCache] retain])) {
 			appIcon = [[self downloadIcon] retain];
 		}

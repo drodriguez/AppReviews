@@ -39,18 +39,23 @@
 #import "FMDatabase.h"
 #import "AppReviewsAppDelegate.h"
 #import "PSLog.h"
+#import "NSString+PSPathAdditions.h"
 
-
-static CFImageRef iconMask() {
-	static CFImageRef _iconMask = NULL;
-	static NSLock *_iconMaskLock = [[NSLock alloc] init];
+// Static and lazy loading of the icon mask image.
+static CGImageRef iconMask() {
+	static CGImageRef _iconMask = NULL;
+	static NSLock *_iconMaskLock = nil;
+	
+	if (!_iconMaskLock) {
+		_iconMaskLock = [[NSLock alloc] init];
+	}
 
 	[_iconMaskLock lock];
 	if (!_iconMask) {
 		NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
 															 stringByAppendingPathComponent:@"iconmask.png"];
 		UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
-		CFImageRef maskImageRef = (CFImageRef)maskImage;
+		CGImageRef maskImageRef = (CGImageRef)maskImage;
 		_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
 																	CGImageGetHeight(maskImageRef),
 																	CGImageGetBitsPerComponent(maskImageRef),
@@ -65,6 +70,19 @@ static CFImageRef iconMask() {
 	return _iconMask;
 }
 
+// Static and lazy loading of the icon cache directory path
+static NSString *cacheDirectoryPath() {
+	static NSString *_cacheDirectoryPath = nil;
+	
+	if (!_cacheDirectoryPath) {
+		_cacheDirectoryPath = [[[NSString cachesPath]
+														stringByAppendingPathComponent:@"AppStoreApplicationIcons"]
+													 retain];
+	}
+	
+	return _cacheDirectoryPath;
+}
+
 
 @interface ARAppStoreApplication ()
 
@@ -72,6 +90,7 @@ static CFImageRef iconMask() {
 
 - (UIImage *)loadIconFromCache;
 - (UIImage *)downloadIcon;
+- (NSString *)pathInCache;
 - (void)removeIconFromCache;
 
 @end
@@ -347,11 +366,22 @@ static CFImageRef iconMask() {
 	}
 }
 
+- (UIImage *)loadIconFromCache {
+	UIImage *result = nil;
+	
+	NSString *pathInCache = [self pathInCache];
+	NSFileManager *fileMgr = [NSFileManager defaultManager];
+	if ([fileMgr fileExistsAtPath:pathInCache]) {
+		result = [UIImage imageWithContentsOfFile:pathInCache];
+	}
+	
+	return result;
+}
+
 - (UIImage *)downloadIcon {
 	// Request the image to the App Store.
 	// Snipped copied from AppStoreVerifyOperation
-	PSLogDebug(@"url=%@", url);
-	NSData *result = nil;
+	NSData *data = nil;
 	NSURLResponse *response = nil;
 	NSError *error = nil;
 	NSMutableURLRequest *theRequest = [NSMutableURLRequest
@@ -374,20 +404,58 @@ static CFImageRef iconMask() {
 	[appDelegate performSelectorOnMainThread:@selector(increaseNetworkUsageCount)
 																withObject:nil
 														 waitUntilDone:YES];
-	result = [NSURLConnection sendSynchronousRequest:theRequest
+	data = [NSURLConnection sendSynchronousRequest:theRequest
 																 returningResponse:&response
 																						 error:&error];
 	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
 																withObject:nil
 														 waitUntilDone:YES];
-	if (result == nil && error)
+	if (data == nil && error)
 	{
 		PSLogError(@"URL request failed with error: %@", error);
 	}
 	
-	// TODO
+	// Create the raw icon image in memory.
+	UIImage *originalIcon = [[UIImage alloc] initWithData:data];
+	CGSize size = CGSizeMake(29, 29);
+	CGRect rect = CGRectMake(0, 0, 29, 29);
+	UIGraphicsBeginImageContext(size);
+	CGContextClipToMask(UIGraphicsGetCurrentContext(), rect, iconMask());
+	[originalIcon drawInRect:rect];
+	UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
+	UIGraphicsEndImageContext();
+	[originalIcon release];
+	
+	// Save image to cache (remove old image)
+	[self removeIconFromCache];
+	[UIImagePNGRepresentation(result) writeToFile:[self pathInCache]
+																		 atomically:YES];
+	
+	return result;
 }
 
+- (NSString *)pathInCache {
+	NSString *fileName = [NSString stringWithFormat:@"%d-%d.png",
+												self.primaryKey,
+												self.appIdentifier];
+	return [cacheDirectoryPath() stringByAppendingPathComponent:fileName];
+}
+
+- (void)removeIconFromCache {
+	NSString *pathInCache = [self pathInCache];
+	
+	NSFileManager *fileMgr = [NSFileManager defaultManager];
+	if ([fileMgr fileExistsAtPath:pathInCache]) {
+		NSError *error = nil;
+		[fileMgr removeItemAtPath:pathInCache error:&error];
+		
+		if (error) {
+			PSLogError(@"Error removing image from cache %@", error);
+			// Probably the application will crash after this, but we will get
+			// a crash report about it.
+		}
+	}
+}
 
 #pragma mark -
 #pragma mark Accessors
@@ -461,8 +529,8 @@ static CFImageRef iconMask() {
 
 - (UIImage *)appIcon {
 	if (!appIcon) {
-		if (!(appIcon = [self loadIconFromCache])) {
-			appIcon = [self downloadIcon];
+		if (!(appIcon = [[self loadIconFromCache] retain])) {
+			appIcon = [[self downloadIcon] retain];
 		}
 	}
 	

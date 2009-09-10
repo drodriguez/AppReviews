@@ -78,6 +78,20 @@ static NSString *cacheDirectoryPath() {
 		_cacheDirectoryPath = [[[NSString cachesPath]
 														stringByAppendingPathComponent:@"AppStoreApplicationIcons"]
 													 retain];
+		NSFileManager *fileMgr = [NSFileManager defaultManager];
+		BOOL dir = NO;
+		if (![fileMgr fileExistsAtPath:_cacheDirectoryPath
+											isDirectory:&dir] || !dir) {
+			NSError *error = nil;
+			[[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectoryPath
+																withIntermediateDirectories:YES
+																								 attributes:nil
+																											error:&error];
+			if (error) {
+				PSLogError(@"Error creating cache directory %@", error);
+				// Probably there will be a crash after this.
+			}
+		}
 	}
 	
 	return _cacheDirectoryPath;

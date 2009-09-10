@@ -41,6 +41,31 @@
 #import "PSLog.h"
 
 
+static CFImageRef iconMask() {
+	static CFImageRef _iconMask = NULL;
+	static NSLock *_iconMaskLock = [[NSLock alloc] init];
+
+	[_iconMaskLock lock];
+	if (!_iconMask) {
+		NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
+															 stringByAppendingPathComponent:@"iconmask.png"];
+		UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
+		CFImageRef maskImageRef = (CFImageRef)maskImage;
+		_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
+																	CGImageGetHeight(maskImageRef),
+																	CGImageGetBitsPerComponent(maskImageRef),
+																	CGImageGetBitsPerPixel(maskImageRef),
+																	CGImageGetBytesPerRow(maskImageRef),
+																	CGImageGetDataProvider(maskImageRef),
+																	NULL,
+																	false);
+	}
+	[_iconMaskLock unlock];
+	
+	return _iconMask;
+}
+
+
 @interface ARAppStoreApplication ()
 
 @property (nonatomic, retain) FMDatabase *database;

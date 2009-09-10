@@ -52,6 +52,7 @@
 	NSString *company;
 	NSString *defaultStoreIdentifier;
 	NSString *appIconURL;
+	UIImage *appIcon;
 	
 	// Opaque reference to the underlying database.
 	FMDatabase *database;
@@ -71,6 +72,7 @@
 @property (nonatomic, copy) NSString *appIdentifier;
 @property (nonatomic, copy) NSString *defaultStoreIdentifier;
 @property (nonatomic, copy) NSString *appIconURL;
+@property (retain, readonly) UIImage *appIcon;
 @property (nonatomic, assign) NSInteger position;
 @property (nonatomic, assign, readonly) NSInteger primaryKey;
 @property (nonatomic, readonly) NSUInteger updateOperationsCount;

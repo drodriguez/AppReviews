@@ -45,6 +45,10 @@
 
 @property (nonatomic, retain) FMDatabase *database;
 
+- (UIImage *)loadIconFromCache;
+- (UIImage *)downloadIcon;
+- (void)removeIconFromCache;
+
 @end
 
 
@@ -77,6 +81,7 @@
 		self.appIdentifier = inAppIdentifier;
 		self.defaultStoreIdentifier = inStoreIdentifier;
 		self.appIconURL = nil;
+		appIcon = nil;
 		self.position = -1;
 		self.database = nil;
 		updateOperationsQueue = [[NSOperationQueue alloc] init];
@@ -95,6 +100,7 @@
 	[appIdentifier release];
 	[defaultStoreIdentifier release];
 	[appIconURL release];
+	[appIcon release];
 	[database release];
 	[updateOperationsQueue release];
 	[super dealloc];
@@ -214,6 +220,8 @@
 	defaultStoreIdentifier = nil;
 	[appIconURL release];
 	appIconURL = nil;
+	[appIcon release];
+	appIcon = nil;
 	// Update the object state with respect to hydration.
 	hydrated = NO;
 }
@@ -227,6 +235,11 @@
 		PSLogError(message);
 		NSAssert(0, message);
 	}
+	else
+	{
+		[self removeIconFromCache];
+	}
+
 }
 
 - (NSComparisonResult)compareByPosition:(ARAppStoreApplication *)other
@@ -309,6 +322,10 @@
 	}
 }
 
+- (UIImage *)downloadIcon {
+	// Request the image to the App Store.
+}
+
 
 #pragma mark -
 #pragma mark Accessors
@@ -378,6 +395,16 @@
 
     dirty = YES;
 	position = anInt;
+}
+
+- (UIImage *)appIcon {
+	if (!appIcon) {
+		if (!(appIcon = [self loadIconFromCache])) {
+			appIcon = [self downloadIcon];
+		}
+	}
+	
+	return appIcon;
 }
 
 @end

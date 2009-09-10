@@ -324,6 +324,43 @@
 
 - (UIImage *)downloadIcon {
 	// Request the image to the App Store.
+	// Snipped copied from AppStoreVerifyOperation
+	PSLogDebug(@"url=%@", url);
+	NSData *result = nil;
+	NSURLResponse *response = nil;
+	NSError *error = nil;
+	NSMutableURLRequest *theRequest = [NSMutableURLRequest
+																		 requestWithURL:[NSURL URLWithString:self.appIconURL]
+																				cachePolicy:NSURLRequestUseProtocolCachePolicy
+																		timeoutInterval:10.0];
+	[theRequest setValue:@"iTunes/4.2 (Macintosh; U; PPC Mac OS X 10.2"
+		forHTTPHeaderField:@"User-Agent"];
+	[theRequest setValue:[NSString stringWithFormat:@" %@-1",
+												self.defaultStoreIdentifier]
+		forHTTPHeaderField:@"X-Apple-Store-Front"];
+	
+#ifdef DEBUG
+	NSDictionary *headerFields = [theRequest allHTTPHeaderFields];
+	PSLogDebug([headerFields descriptionWithLocale:nil indent:2]);
+#endif
+	
+	AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication]
+																				delegate];
+	[appDelegate performSelectorOnMainThread:@selector(increaseNetworkUsageCount)
+																withObject:nil
+														 waitUntilDone:YES];
+	result = [NSURLConnection sendSynchronousRequest:theRequest
+																 returningResponse:&response
+																						 error:&error];
+	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
+																withObject:nil
+														 waitUntilDone:YES];
+	if (result == nil && error)
+	{
+		PSLogError(@"URL request failed with error: %@", error);
+	}
+	
+	// TODO
 }
 
 

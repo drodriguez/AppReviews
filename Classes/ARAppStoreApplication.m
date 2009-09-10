@@ -55,7 +55,7 @@ static CGImageRef iconMask() {
 		NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
 															 stringByAppendingPathComponent:@"iconmask.png"];
 		UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
-		CGImageRef maskImageRef = (CGImageRef)maskImage;
+		CGImageRef maskImageRef = [maskImage CGImage];
 		_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
 																	CGImageGetHeight(maskImageRef),
 																	CGImageGetBitsPerComponent(maskImageRef),

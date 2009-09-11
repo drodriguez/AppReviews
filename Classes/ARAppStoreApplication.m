@@ -508,7 +508,7 @@
 	{
 		if (anImage != appIcon) {
 			[appIcon release];
-			appIcon = [anImage copy];
+			appIcon = [anImage retain];
 			
 			// Save image to cache (remove old image)
 			[self removeIconFromCache];

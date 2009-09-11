@@ -76,7 +76,7 @@
 @property (nonatomic, copy) NSString *appIdentifier;
 @property (nonatomic, copy) NSString *defaultStoreIdentifier;
 @property (nonatomic, copy) NSString *appIconURL;
-@property (copy) UIImage *appIcon;
+@property (retain) UIImage *appIcon;
 @property (nonatomic, assign) NSInteger position;
 @property (nonatomic, assign, readonly) NSInteger primaryKey;
 @property (nonatomic, readonly) NSUInteger updateOperationsCount;

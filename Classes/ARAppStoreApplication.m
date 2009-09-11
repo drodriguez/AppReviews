@@ -401,7 +401,7 @@
 }
 
 - (NSString *)pathInCache {
-	NSString *fileName = [NSString stringWithFormat:@"%d-%d.png",
+	NSString *fileName = [NSString stringWithFormat:@"%d-%@.png",
 												self.primaryKey,
 												self.appIdentifier];
 	return [[ARAppStoreApplication cacheDirectoryPath]

@@ -483,6 +483,8 @@
 	dirty = YES;
 	[appIconURL release];
 	appIconURL = [aString copy];
+	
+	self.appIcon = nil;
 }
 
 - (void)setPosition:(NSInteger)anInt
@@ -512,8 +514,10 @@
 			
 			// Save image to cache (remove old image)
 			[self removeIconFromCache];
-			[UIImagePNGRepresentation(appIcon) writeToFile:[self pathInCache]
-																				 atomically:YES];
+			if (appIcon) {
+				[UIImagePNGRepresentation(appIcon) writeToFile:[self pathInCache]
+																						atomically:YES];
+			}
 		}
 	}
 }

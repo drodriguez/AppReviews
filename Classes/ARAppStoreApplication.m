@@ -41,61 +41,6 @@
 #import "PSLog.h"
 #import "NSString+PSPathAdditions.h"
 
-// Static and lazy loading of the icon mask image.
-static CGImageRef iconMask() {
-	static CGImageRef _iconMask = NULL;
-	static NSLock *_iconMaskLock = nil;
-	
-	if (!_iconMaskLock) {
-		_iconMaskLock = [[NSLock alloc] init];
-	}
-
-	[_iconMaskLock lock];
-	if (!_iconMask) {
-		NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
-															 stringByAppendingPathComponent:@"iconmask.png"];
-		UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
-		CGImageRef maskImageRef = [maskImage CGImage];
-		_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
-																	CGImageGetHeight(maskImageRef),
-																	CGImageGetBitsPerComponent(maskImageRef),
-																	CGImageGetBitsPerPixel(maskImageRef),
-																	CGImageGetBytesPerRow(maskImageRef),
-																	CGImageGetDataProvider(maskImageRef),
-																	NULL,
-																	false);
-	}
-	[_iconMaskLock unlock];
-	
-	return _iconMask;
-}
-
-// Static and lazy loading of the icon cache directory path
-static NSString *cacheDirectoryPath() {
-	static NSString *_cacheDirectoryPath = nil;
-	
-	if (!_cacheDirectoryPath) {
-		_cacheDirectoryPath = [[[NSString cachesPath]
-														stringByAppendingPathComponent:@"AppStoreApplicationIcons"]
-													 retain];
-		NSFileManager *fileMgr = [NSFileManager defaultManager];
-		BOOL dir = NO;
-		if (![fileMgr fileExistsAtPath:_cacheDirectoryPath
-											isDirectory:&dir] || !dir) {
-			NSError *error = nil;
-			[[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectoryPath
-																withIntermediateDirectories:YES
-																								 attributes:nil
-																											error:&error];
-			if (error) {
-				PSLogError(@"Error creating cache directory %@", error);
-				// Probably there will be a crash after this.
-			}
-		}
-	}
-	
-	return _cacheDirectoryPath;
-}
 
 
 @interface ARAppStoreApplication ()
@@ -106,6 +51,9 @@ static NSString *cacheDirectoryPath() {
 - (UIImage *)downloadIcon;
 - (NSString *)pathInCache;
 - (void)removeIconFromCache;
+
++ (CGImageRef)iconMask;
++ (NSString *)cacheDirectoryPath;
 
 @end
 
@@ -434,7 +382,9 @@ static NSString *cacheDirectoryPath() {
 	CGSize size = CGSizeMake(29, 29);
 	CGRect rect = CGRectMake(0, 0, 29, 29);
 	UIGraphicsBeginImageContext(size);
-	CGContextClipToMask(UIGraphicsGetCurrentContext(), rect, iconMask());
+	CGContextClipToMask(UIGraphicsGetCurrentContext(),
+											rect,
+											[ARAppStoreApplication iconMask]);
 	[originalIcon drawInRect:rect];
 	UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
@@ -452,7 +402,8 @@ static NSString *cacheDirectoryPath() {
 	NSString *fileName = [NSString stringWithFormat:@"%d-%d.png",
 												self.primaryKey,
 												self.appIdentifier];
-	return [cacheDirectoryPath() stringByAppendingPathComponent:fileName];
+	return [[ARAppStoreApplication cacheDirectoryPath]
+					stringByAppendingPathComponent:fileName];
 }
 
 - (void)removeIconFromCache {
@@ -469,6 +420,55 @@ static NSString *cacheDirectoryPath() {
 			// a crash report about it.
 		}
 	}
+}
+
++ (CGImageRef)iconMask {
+	static CGImageRef _iconMask = NULL;
+	
+	@synchronized(self) {
+		if (!_iconMask) {
+			NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
+																 stringByAppendingPathComponent:@"iconmask.png"];
+			UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
+			CGImageRef maskImageRef = [maskImage CGImage];
+			_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
+																		CGImageGetHeight(maskImageRef),
+																		CGImageGetBitsPerComponent(maskImageRef),
+																		CGImageGetBitsPerPixel(maskImageRef),
+																		CGImageGetBytesPerRow(maskImageRef),
+																		CGImageGetDataProvider(maskImageRef),
+																		NULL,
+																		false);
+		}
+	}
+	
+	return _iconMask;
+}
+
++ (NSString *)cacheDirectoryPath {
+	static NSString *_cacheDirectoryPath = nil;
+	
+	if (!_cacheDirectoryPath) {
+		_cacheDirectoryPath = [[[NSString cachesPath]
+														stringByAppendingPathComponent:@"AppStoreApplicationIcons"]
+													 retain];
+		NSFileManager *fileMgr = [NSFileManager defaultManager];
+		BOOL dir = NO;
+		if (![fileMgr fileExistsAtPath:_cacheDirectoryPath
+											 isDirectory:&dir] || !dir) {
+			NSError *error = nil;
+			[[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectoryPath
+																withIntermediateDirectories:YES
+																								 attributes:nil
+																											error:&error];
+			if (error) {
+				PSLogError(@"Error creating cache directory %@", error);
+				// Probably there will be a crash after this.
+			}
+		}
+	}
+	
+	return _cacheDirectoryPath;	
 }
 
 #pragma mark -

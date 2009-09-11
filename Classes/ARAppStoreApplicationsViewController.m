@@ -246,9 +246,14 @@
 	else
 		cell.detailTextLabel.text = @"Waiting for first update";
 	
-	cell.imageView.image = [[ARAppStoreApplicationsViewController busyAnimationImages] objectAtIndex:0];
-	cell.imageView.animationImages = [ARAppStoreApplicationsViewController busyAnimationImages];
-	[cell.imageView startAnimating];
+	if (app.appIcon) {
+		cell.imageView.image = app.appIcon;
+	} else {
+		// HACK: set image, otherwise the animation do not show.
+		cell.imageView.image = [[ARAppStoreApplicationsViewController busyAnimationImages] objectAtIndex:0];
+		cell.imageView.animationImages = [ARAppStoreApplicationsViewController busyAnimationImages];
+		[cell.imageView startAnimating];
+	}
 
 	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 

@@ -30,6 +30,7 @@
 		659F9C54105A4B2900D750A7 /* busy15.png in Resources */ = {isa = PBXBuildFile; fileRef = 659F9C44105A4B2900D750A7 /* busy15.png */; };
 		659F9C55105A4B2900D750A7 /* busy16.png in Resources */ = {isa = PBXBuildFile; fileRef = 659F9C45105A4B2900D750A7 /* busy16.png */; };
 		659F9CCA105A517E00D750A7 /* iconoutline.png in Resources */ = {isa = PBXBuildFile; fileRef = 659F9CC9105A517E00D750A7 /* iconoutline.png */; };
+		65D1E9F9105AA57A00C6748C /* ARAppIconDownloadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D1E9F8105AA57A00C6748C /* ARAppIconDownloadOperation.m */; };
 		FB445A6F0ED2F36000D89246 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = FB445A6E0ED2F36000D89246 /* Reachability.m */; };
 		FB445AA90ED2F42400D89246 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB445AA80ED2F42400D89246 /* SystemConfiguration.framework */; };
 		FB445BAB0ED54D5D00D89246 /* ARAppStoreReviewsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = FB445BAA0ED54D5D00D89246 /* ARAppStoreReviewsViewController.m */; };
@@ -187,6 +188,8 @@
 		659F9C44105A4B2900D750A7 /* busy15.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = busy15.png; path = Resources/busy15.png; sourceTree = "<group>"; };
 		659F9C45105A4B2900D750A7 /* busy16.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = busy16.png; path = Resources/busy16.png; sourceTree = "<group>"; };
 		659F9CC9105A517E00D750A7 /* iconoutline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iconoutline.png; path = Resources/iconoutline.png; sourceTree = "<group>"; };
+		65D1E9F7105AA57A00C6748C /* ARAppIconDownloadOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARAppIconDownloadOperation.h; sourceTree = "<group>"; };
+		65D1E9F8105AA57A00C6748C /* ARAppIconDownloadOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ARAppIconDownloadOperation.m; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB445A6D0ED2F36000D89246 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		FB445A6E0ED2F36000D89246 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
@@ -646,6 +649,8 @@
 				FBAA77AA103E13D7002585DE /* ARAppStoreVerifyOperation.m */,
 				FBAA7525103B6F5D002585DE /* ARAppStoreUpdateOperation.h */,
 				FBAA7526103B6F5D002585DE /* ARAppStoreUpdateOperation.m */,
+				65D1E9F7105AA57A00C6748C /* ARAppIconDownloadOperation.h */,
+				65D1E9F8105AA57A00C6748C /* ARAppIconDownloadOperation.m */,
 			);
 			name = Operations;
 			sourceTree = "<group>";
@@ -865,6 +870,7 @@
 				FBAA7527103B6F5D002585DE /* ARAppStoreUpdateOperation.m in Sources */,
 				FBAA77AB103E13D7002585DE /* ARAppStoreVerifyOperation.m in Sources */,
 				FBFAEC421049E2D700B0DFFD /* PSHelpViewController.m in Sources */,
+				65D1E9F9105AA57A00C6748C /* ARAppIconDownloadOperation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

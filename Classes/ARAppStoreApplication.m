@@ -34,6 +34,7 @@
 #import "ARAppReviewsStore.h"
 #import "ARAppStoreApplication.h"
 #import "ARAppStoreUpdateOperation.h"
+#import "ARAppIconDownloadOperation.h"
 #import "ARAppStore.h"
 #import "ARAppStoreApplicationDetails.h"
 #import "FMDatabase.h"
@@ -42,18 +43,14 @@
 #import "NSString+PSPathAdditions.h"
 
 
-
 @interface ARAppStoreApplication ()
 
 @property (nonatomic, retain) FMDatabase *database;
 
 - (UIImage *)loadIconFromCache;
-- (UIImage *)downloadIcon;
 - (NSString *)pathInCache;
 - (void)removeIconFromCache;
 
-+ (CGImageRef)iconMask;
-+ (UIImage *)iconOutline;
 + (NSString *)cacheDirectoryPath;
 
 @end
@@ -61,7 +58,7 @@
 
 @implementation ARAppStoreApplication
 
-@synthesize name, company, appIdentifier, defaultStoreIdentifier, appIconURL, position, primaryKey, database, updateOperationsCount;
+@synthesize name, company, appIdentifier, defaultStoreIdentifier, appIconURL, appIcon, position, primaryKey, database, updateOperationsCount;
 
 - (id)init
 {
@@ -329,6 +326,42 @@
 	}
 }
 
+- (void)startDownloadingIcon
+{
+	if (!downloader) {
+		downloader = [[ARAppIconDownloadOperation alloc] initWithApplication:self];
+		
+		AppReviewsAppDelegate* appDelegate = [[UIApplication sharedApplication]
+																					delegate];
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self
+																						 selector:@selector(iconDownloadFinished:)
+																								 name:kARAppIconDownloadOperationDidFinishNotification
+																							 object:downloader];
+		[[NSNotificationCenter defaultCenter] addObserver:self
+																						 selector:@selector(iconDownloadFinished:)
+																								 name:kARAppIconDownloadOperationDidFailNotification
+																							 object:downloader];
+		
+		[appDelegate.operationQueue addOperation:downloader];
+	}
+}
+
+- (void)cancelIconDownload
+{
+	if (downloader) {
+		[downloader cancel];
+		[downloader release];
+		downloader = nil;
+	}
+}
+
+- (void)iconDownloadFinished:(NSNotification *)notification
+{
+	[downloader release];
+	downloader = nil;
+}
+
 - (UIImage *)loadIconFromCache {
 	UIImage *result = nil;
 	
@@ -337,65 +370,6 @@
 	if ([fileMgr fileExistsAtPath:pathInCache]) {
 		result = [UIImage imageWithContentsOfFile:pathInCache];
 	}
-	
-	return result;
-}
-
-- (UIImage *)downloadIcon {
-	// Request the image to the App Store.
-	// Snipped copied from AppStoreVerifyOperation
-	NSData *data = nil;
-	NSURLResponse *response = nil;
-	NSError *error = nil;
-	NSMutableURLRequest *theRequest = [NSMutableURLRequest
-																		 requestWithURL:[NSURL URLWithString:self.appIconURL]
-																				cachePolicy:NSURLRequestUseProtocolCachePolicy
-																		timeoutInterval:10.0];
-	[theRequest setValue:@"iTunes/4.2 (Macintosh; U; PPC Mac OS X 10.2"
-		forHTTPHeaderField:@"User-Agent"];
-	[theRequest setValue:[NSString stringWithFormat:@" %@-1",
-												self.defaultStoreIdentifier]
-		forHTTPHeaderField:@"X-Apple-Store-Front"];
-	
-#ifdef DEBUG
-	NSDictionary *headerFields = [theRequest allHTTPHeaderFields];
-	PSLogDebug([headerFields descriptionWithLocale:nil indent:2]);
-#endif
-	
-	AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication]
-																				delegate];
-	[appDelegate performSelectorOnMainThread:@selector(increaseNetworkUsageCount)
-																withObject:nil
-														 waitUntilDone:YES];
-	data = [NSURLConnection sendSynchronousRequest:theRequest
-																 returningResponse:&response
-																						 error:&error];
-	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
-																withObject:nil
-														 waitUntilDone:YES];
-	if (data == nil && error)
-	{
-		PSLogError(@"URL request failed with error: %@", error);
-	}
-	
-	// Create the raw icon image in memory.
-	UIImage *originalIcon = [[UIImage alloc] initWithData:data];
-	CGSize size = CGSizeMake(29, 29);
-	CGRect rect = CGRectMake(0, 0, 29, 29);
-	UIGraphicsBeginImageContext(size);
-	CGContextClipToMask(UIGraphicsGetCurrentContext(),
-											rect,
-											[ARAppStoreApplication iconMask]);
-	[originalIcon drawInRect:rect];
-	[[ARAppStoreApplication iconOutline] drawInRect:rect];
-	UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
-	UIGraphicsEndImageContext();
-	[originalIcon release];
-	
-	// Save image to cache (remove old image)
-	[self removeIconFromCache];
-	[UIImagePNGRepresentation(result) writeToFile:[self pathInCache]
-																		 atomically:YES];
 	
 	return result;
 }
@@ -422,43 +396,6 @@
 			// a crash report about it.
 		}
 	}
-}
-
-+ (CGImageRef)iconMask {
-	static CGImageRef _iconMask = NULL;
-	
-	@synchronized(self) {
-		if (!_iconMask) {
-			NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath]
-																 stringByAppendingPathComponent:@"iconmask.png"];
-			UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
-			CGImageRef maskImageRef = [maskImage CGImage];
-			_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
-																		CGImageGetHeight(maskImageRef),
-																		CGImageGetBitsPerComponent(maskImageRef),
-																		CGImageGetBitsPerPixel(maskImageRef),
-																		CGImageGetBytesPerRow(maskImageRef),
-																		CGImageGetDataProvider(maskImageRef),
-																		NULL,
-																		false);
-		}
-	}
-	
-	return _iconMask;
-}
-
-+ (UIImage *)iconOutline {
-	static UIImage *_iconOutline = nil;
-	
-	@synchronized(self) {
-		if (!_iconOutline) {
-			NSString *outlineImagePath = [[[NSBundle mainBundle] resourcePath]
-																		stringByAppendingPathComponent:@"iconoutline.png"];
-			_iconOutline = [[UIImage alloc] initWithContentsOfFile:outlineImagePath];
-		}
-	}
-	
-	return _iconOutline;
 }
 
 + (NSString *)cacheDirectoryPath {
@@ -559,12 +496,26 @@
 
 - (UIImage *)appIcon {
 	if (appIconURL && !appIcon) {
-		if (!(appIcon = [[self loadIconFromCache] retain])) {
-			appIcon = [[self downloadIcon] retain];
-		}
+		appIcon = [[self loadIconFromCache] retain];
 	}
 	
 	return appIcon;
+}
+
+- (void)setAppIcon:(UIImage *)anImage
+{
+	@synchronized(self)
+	{
+		if (anImage != appIcon) {
+			[appIcon release];
+			appIcon = [anImage copy];
+			
+			// Save image to cache (remove old image)
+			[self removeIconFromCache];
+			[UIImagePNGRepresentation(appIcon) writeToFile:[self pathInCache]
+																				 atomically:YES];
+		}
+	}
 }
 
 @end

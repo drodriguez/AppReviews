@@ -39,7 +39,9 @@
 
 
 @class FMDatabase;
+@class ARAppStoreApplicationDetails;
 @class ARAppStoreUpdateOperation;
+@class ARAppIconDownloadOperation;
 
 
 @interface ARAppStoreApplication : NSObject
@@ -65,6 +67,8 @@
 	// NSOperationQueue for all downloads related to this app.
 	NSOperationQueue *updateOperationsQueue;
 	NSUInteger updateOperationsCount;
+	// NSOperation for downloading the icon in the background
+	ARAppIconDownloadOperation *downloader;
 }
 
 @property (nonatomic, copy) NSString *name;
@@ -72,7 +76,7 @@
 @property (nonatomic, copy) NSString *appIdentifier;
 @property (nonatomic, copy) NSString *defaultStoreIdentifier;
 @property (nonatomic, copy) NSString *appIconURL;
-@property (retain, readonly) UIImage *appIcon;
+@property (copy) UIImage *appIcon;
 @property (nonatomic, assign) NSInteger position;
 @property (nonatomic, assign, readonly) NSInteger primaryKey;
 @property (nonatomic, readonly) NSUInteger updateOperationsCount;
@@ -100,5 +104,8 @@
 - (void)suspendAllOperations;
 - (void)resumeAllOperations;
 - (void)addUpdateOperation:(ARAppStoreUpdateOperation *)op;
+// Start downloading or cancel the download of this application icon.
+- (void)startDownloadingIcon;
+- (void)cancelIconDownload;
 
 @end

@@ -386,6 +386,7 @@
 											rect,
 											[ARAppStoreApplication iconMask]);
 	[originalIcon drawInRect:rect];
+	[[ARAppStoreApplication iconOutline] drawInRect:rect];
 	UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
 	UIGraphicsEndImageContext();
 	[originalIcon release];
@@ -443,6 +444,20 @@
 	}
 	
 	return _iconMask;
+}
+
++ (UIImage *)iconOutline {
+	static UIImage *_iconOutline = nil;
+	
+	@synchronized(self) {
+		if (!_iconOutline) {
+			NSString *outlineImagePath = [[[NSBundle mainBundle] resourcePath]
+																		stringByAppendingPathComponent:@"iconoutline.png"];
+			_iconOutline = [[UIImage alloc] initWithContentsOfFile:outlineImagePath];
+		}
+	}
+	
+	return _iconOutline;
 }
 
 + (NSString *)cacheDirectoryPath {

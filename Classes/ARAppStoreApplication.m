@@ -53,6 +53,7 @@
 - (void)removeIconFromCache;
 
 + (CGImageRef)iconMask;
++ (UIImage *)iconOutline;
 + (NSString *)cacheDirectoryPath;
 
 @end

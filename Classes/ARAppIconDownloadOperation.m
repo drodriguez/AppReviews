@@ -118,6 +118,12 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 												 0.25,
 												 false); 
 		} while(!finished);
+	} else {
+		[[NSNotificationCenter defaultCenter]
+		 performSelectorOnMainThread:@selector(postNotification:)
+		 withObject:[NSNotification notificationWithName:kARAppIconDownloadOperationDidFailNotification
+																							object:app]
+		 waitUntilDone:YES];
 	}
 	
 	[pool drain];
@@ -210,7 +216,14 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 {
 	if (![self isCancelled]) {
 		[self createFinalIcon];
+	} else {
+		[[NSNotificationCenter defaultCenter]
+		 performSelectorOnMainThread:@selector(postNotification:)
+		 withObject:[NSNotification notificationWithName:kARAppIconDownloadOperationDidFailNotification
+																							object:app]
+		 waitUntilDone:YES];
 	}
+
 	
 	finished = YES;
 }
@@ -224,7 +237,7 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 	 performSelectorOnMainThread:@selector(postNotification:)
 	 withObject:[NSNotification notificationWithName:kARAppIconDownloadOperationDidFailNotification
 																						object:app]
-	 waitUntilDone:YES];	
+	 waitUntilDone:YES];
 	
 	finished = YES;
 }

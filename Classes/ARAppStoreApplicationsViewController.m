@@ -36,6 +36,7 @@
 #import "ARAppReviewsStore.h"
 #import "ARAppStoreApplication.h"
 #import "AREditAppStoreApplicationViewController.h"
+#import "ARAppStoreApplicationTableCell.h"
 #import "AppReviewsAppDelegate.h"
 #import "PSAboutViewController.h"
 #import "PSLog.h"
@@ -208,6 +209,14 @@
 	[self.navigationController pushViewController:self.appStoreCountriesViewController animated:YES];
 }
 
+- (void)tableView:(UITableView *)tableView
+	willDisplayCell:(UITableViewCell *)cell
+forRowAtIndexPath:(NSIndexPath *)indexPath
+{
+	[(ARAppStoreApplicationTableCell *)cell tableView:tableView
+										willDisplayCellForRowAtIndexPath:indexPath];
+}
+
 
 
 #pragma mark -
@@ -227,15 +236,21 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *CellIdentifier = @"AppCell";
+	static NSString *CellIdentifier = @"AppCell";
 
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-    if (cell == nil)
-	{
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
-    }
-    // Configure the cell
+	ARAppStoreApplicationTableCell *cell =
+		(ARAppStoreApplicationTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
 	ARAppStoreApplication *app = [[ARAppReviewsStore sharedInstance] applicationAtIndex:indexPath.row];
+  if (cell == nil)
+	{
+		cell = [[[ARAppStoreApplicationTableCell alloc] initWithApplication:app
+																												reuseIdentifier:CellIdentifier]
+						autorelease];
+	} else {
+		cell.app = app;
+	}
+
+  // Configure the cell
 	if (app.name==nil || [app.name length]==0)
 		cell.textLabel.text = app.appIdentifier;
 	else
@@ -257,7 +272,7 @@
 
 	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
 
-    return cell;
+	return cell;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath

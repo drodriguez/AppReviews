@@ -31,6 +31,7 @@
 		659F9C55105A4B2900D750A7 /* busy16.png in Resources */ = {isa = PBXBuildFile; fileRef = 659F9C45105A4B2900D750A7 /* busy16.png */; };
 		659F9CCA105A517E00D750A7 /* iconoutline.png in Resources */ = {isa = PBXBuildFile; fileRef = 659F9CC9105A517E00D750A7 /* iconoutline.png */; };
 		65D1E9F9105AA57A00C6748C /* ARAppIconDownloadOperation.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D1E9F8105AA57A00C6748C /* ARAppIconDownloadOperation.m */; };
+		65D1EA3F105AE50D00C6748C /* ARAppStoreApplicationTableCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 65D1EA3E105AE50D00C6748C /* ARAppStoreApplicationTableCell.m */; };
 		FB445A6F0ED2F36000D89246 /* Reachability.m in Sources */ = {isa = PBXBuildFile; fileRef = FB445A6E0ED2F36000D89246 /* Reachability.m */; };
 		FB445AA90ED2F42400D89246 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB445AA80ED2F42400D89246 /* SystemConfiguration.framework */; };
 		FB445BAB0ED54D5D00D89246 /* ARAppStoreReviewsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = FB445BAA0ED54D5D00D89246 /* ARAppStoreReviewsViewController.m */; };
@@ -190,6 +191,8 @@
 		659F9CC9105A517E00D750A7 /* iconoutline.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iconoutline.png; path = Resources/iconoutline.png; sourceTree = "<group>"; };
 		65D1E9F7105AA57A00C6748C /* ARAppIconDownloadOperation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARAppIconDownloadOperation.h; sourceTree = "<group>"; };
 		65D1E9F8105AA57A00C6748C /* ARAppIconDownloadOperation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ARAppIconDownloadOperation.m; sourceTree = "<group>"; };
+		65D1EA3D105AE50D00C6748C /* ARAppStoreApplicationTableCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ARAppStoreApplicationTableCell.h; sourceTree = "<group>"; };
+		65D1EA3E105AE50D00C6748C /* ARAppStoreApplicationTableCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ARAppStoreApplicationTableCell.m; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FB445A6D0ED2F36000D89246 /* Reachability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Reachability.h; sourceTree = "<group>"; };
 		FB445A6E0ED2F36000D89246 /* Reachability.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Reachability.m; sourceTree = "<group>"; };
@@ -638,6 +641,8 @@
 				FBC628F40FF02C8A002B6DD5 /* ARAppStoreReviewsSummaryTableCell.m */,
 				FBC629A80FF0B849002B6DD5 /* ARAppStoreRatingsCountTableCell.h */,
 				FBC629A90FF0B849002B6DD5 /* ARAppStoreRatingsCountTableCell.m */,
+				65D1EA3D105AE50D00C6748C /* ARAppStoreApplicationTableCell.h */,
+				65D1EA3E105AE50D00C6748C /* ARAppStoreApplicationTableCell.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -871,6 +876,7 @@
 				FBAA77AB103E13D7002585DE /* ARAppStoreVerifyOperation.m in Sources */,
 				FBFAEC421049E2D700B0DFFD /* PSHelpViewController.m in Sources */,
 				65D1E9F9105AA57A00C6748C /* ARAppIconDownloadOperation.m in Sources */,
+				65D1EA3F105AE50D00C6748C /* ARAppStoreApplicationTableCell.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

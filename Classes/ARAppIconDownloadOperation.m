@@ -198,6 +198,12 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 	if ([self isCancelled]) {
 		[connection cancel];
 		
+		AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication]
+																					delegate];
+		[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
+																	withObject:nil
+															 waitUntilDone:YES];
+		
 		[[NSNotificationCenter defaultCenter]
 		 performSelectorOnMainThread:@selector(postNotification:)
 		 withObject:[NSNotification notificationWithName:kARAppIconDownloadOperationDidFailNotification
@@ -214,6 +220,12 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
+	AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication]
+																				delegate];
+	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
+																withObject:nil
+														 waitUntilDone:YES];
+	
 	if (![self isCancelled]) {
 		[self createFinalIcon];
 	} else {
@@ -232,6 +244,12 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 	didFailWithError:(NSError *)error
 {
 	PSLogError(@"URL request failed with error:%@", error);
+	
+	AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication]
+																				delegate];
+	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount)
+																withObject:nil
+														 waitUntilDone:YES];
 	
 	[[NSNotificationCenter defaultCenter]
 	 performSelectorOnMainThread:@selector(postNotification:)

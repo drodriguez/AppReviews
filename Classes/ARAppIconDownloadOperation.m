@@ -87,7 +87,7 @@ NSString *kARAppIconDownloadOperationDidFailNotification = @"ARAppIconDownloadOp
 	if (![self isCancelled])
 	{
 		NSURL *appIconURL = [NSURL URLWithString:app.appIconURL];
-		data = [[NSData alloc] init];
+		data = [[NSMutableData alloc] init];
 		
 		NSMutableURLRequest *request =
 			[NSMutableURLRequest requestWithURL:appIconURL

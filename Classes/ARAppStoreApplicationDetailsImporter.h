@@ -57,9 +57,7 @@ typedef enum
 {
 	DetailsCheckingAvailability,
 	DetailsSeekingAppGenre,
-	DetailsSeekingCompanyName,
-	DetailsSeekingAppName,
-	DetailsSeekingAppIcon,
+	DetailsSeekingAppNameAndIconAndCompanyName,
 	DetailsSeekingCategory,
 	DetailsSeekingReleased,
 	DetailsSeekingCopyright,

@@ -536,29 +536,21 @@
 	{
 		switch (xmlState)
 		{
-			case DetailsSeekingCompanyName:
+			case DetailsSeekingAppNameAndIconAndCompanyName:
 			{
 				NSString *url = [attributeDict objectForKey:@"url"];
 				NSString *value = [attributeDict objectForKey:@"draggingName"];
 				if (value) {
 					NSRange viewArtistQuery = [url rangeOfString:@"viewArtist?"];
+					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
 					if (viewArtistQuery.location != NSNotFound) {
 						self.appCompany = value;
-						xmlState = DetailsSeekingAppName;
 					}
-				}
-				break;
-			}
-			case DetailsSeekingAppName:
-			{
-				NSString *url = [attributeDict objectForKey:@"url"];
-				NSString *value = [attributeDict objectForKey:@"draggingName"];
-				if (value) {
-					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
-					if (viewSoftwareQuery.location != NSNotFound) {
+					else if (viewSoftwareQuery.location != NSNotFound) {
 						self.appName = value;
-						xmlState = DetailsSeekingAppIcon;
 					}
+					xmlState = self.appName && self.appCompany && self.appIconURL ?
+						DetailsSeekingCategory : xmlState;
 				}
 				break;
 			}
@@ -589,12 +581,13 @@
 	else if ([elementNameLower isEqualToString:@"pictureview"])
 	{
 		switch (xmlState) {
-			case DetailsSeekingAppIcon:
+			case DetailsSeekingAppNameAndIconAndCompanyName:
 			{
 				GTMRegex *regex = [GTMRegex regexWithPattern:@" artwork$"];
 				if ([regex matchesSubStringInString:[attributeDict objectForKey:@"alt"]]) {
 					self.appIconURL = [attributeDict objectForKey:@"url"];
-					xmlState = DetailsSeekingCategory;
+					xmlState = self.appName && self.appCompany && self.appIconURL ?
+						DetailsSeekingCategory : xmlState;
 				}
 				break;
 			}
@@ -659,7 +652,7 @@
 					if (([substrings count] > 0) && ([substrings objectAtIndex:0] != [NSNull null]) && ([substrings objectAtIndex:1] != [NSNull null]))
 					{
 						self.categoryIdentifier = [substrings objectAtIndex:1];
-						xmlState = DetailsSeekingCompanyName;
+						xmlState = DetailsSeekingAppNameAndIconAndCompanyName;
 					}
 					else
 						xmlState = DetailsSeekingAppGenre;

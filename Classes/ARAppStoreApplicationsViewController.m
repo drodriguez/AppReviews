@@ -46,8 +46,6 @@
 
 @property (nonatomic, retain) NSNumber *savedEditingState;
 
-+ (NSArray *)busyAnimationImages;
-
 @end
 
 
@@ -157,25 +155,6 @@
 	[[self navigationController] pushViewController:aboutView animated:YES];
 }
 
-+ (NSArray *)busyAnimationImages {
-	static NSArray *_busyAnimationImages;
-	
-	@synchronized(self) {
-		if (!_busyAnimationImages) {
-			NSString *busyImagePath = [[[NSBundle mainBundle] resourcePath]
-																 stringByAppendingPathComponent:@"busy%d.png"];
-			NSMutableArray *tmp = [NSMutableArray arrayWithCapacity:15];
-			for (NSUInteger index = 1; index <= 16; index++) {
-				[tmp addObject:[UIImage imageWithContentsOfFile:
-												[NSString stringWithFormat:busyImagePath, index]]];
-			}
-			_busyAnimationImages = [tmp copy];
-		}
-	}
-	
-	return _busyAnimationImages;
-}
-
 #pragma mark -
 #pragma mark UITableViewDelegate methods
 
@@ -250,28 +229,6 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
 		cell.app = app;
 	}
 
-  // Configure the cell
-	if (app.name==nil || [app.name length]==0)
-		cell.textLabel.text = app.appIdentifier;
-	else
-		cell.textLabel.text = app.name;
-
-	if (app.company)
-		cell.detailTextLabel.text = app.company;
-	else
-		cell.detailTextLabel.text = @"Waiting for first update";
-	
-	if (app.appIcon) {
-		cell.imageView.image = app.appIcon;
-	} else {
-		// HACK: set image, otherwise the animation do not show.
-		cell.imageView.image = [[ARAppStoreApplicationsViewController busyAnimationImages] objectAtIndex:0];
-		cell.imageView.animationImages = [ARAppStoreApplicationsViewController busyAnimationImages];
-		[cell.imageView startAnimating];
-	}
-
-	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-
 	return cell;
 }
 
@@ -330,4 +287,3 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
 }
 
 @end
-

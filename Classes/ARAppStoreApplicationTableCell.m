@@ -36,6 +36,14 @@
 #import "ARAppIconDownloadOperation.h"
 #import "PSLog.h"
 
+@interface ARAppStoreApplicationTableCell ()
+
++ (UIImage *)unknownIcon;
++ (NSArray *)busyAnimationImages;
+
+@end
+
+
 
 @implementation ARAppStoreApplicationTableCell
 
@@ -47,7 +55,7 @@
 	if (self = [super initWithStyle:UITableViewCellStyleSubtitle
 									reuseIdentifier:reuseIdentifier])
 	{
-		app = [anApp retain];
+		self.app = anApp;
 	}
 	
 	return self;
@@ -71,23 +79,28 @@
 willDisplayCellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	if (app.appIcon || !app.appIconURL) {
-		// TODO: set a placeholder image when there is no URL
+		// No need to do anything in those cases.
 		return;
 	}
-	
+		
 	[[NSNotificationCenter defaultCenter] addObserver:self
 																					 selector:@selector(appIconDownloaded:)
 																							 name:kARAppIconDownloadOperationDidFinishNotification
-																						 object:nil];
+																						 object:app];
 	[[NSNotificationCenter defaultCenter] addObserver:self
 																					 selector:@selector(appIconDownloadFailed:)
 																							 name:kARAppIconDownloadOperationDidFailNotification
-																						 object:nil];
+																						 object:app];
 	[app startDownloadingIcon];	
 }
 
 - (void)appIconDownloaded:(NSNotification *)notification
 {
+	if ([notification object] != app) {
+		// It is not for us.
+		return;
+	}
+	
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
 	[self.imageView performSelectorOnMainThread:@selector(setAnimationImages:)
@@ -102,13 +115,85 @@ willDisplayCellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	// TODO: set a placeholder image?
 	[self.imageView performSelectorOnMainThread:@selector(setAnimationImages:)
 																	 withObject:nil
 																waitUntilDone:YES];	
 	[self.imageView performSelectorOnMainThread:@selector(setImage:)
-																	 withObject:nil
+																	 withObject:[[self class] unknownIcon]
 																waitUntilDone:YES];
 }
 
++ (UIImage *)unknownIcon
+{
+	static UIImage *_unknownIcon = nil;
+	
+	@synchronized(self) {
+		if (!_unknownIcon) {
+			NSString *iconImagePath = [[[NSBundle mainBundle] resourcePath]
+																 stringByAppendingPathComponent:@"unknownicon.png"];
+			_unknownIcon = [UIImage imageWithContentsOfFile:iconImagePath];
+		}
+	}
+	
+	return _unknownIcon;
+}
+
++ (NSArray *)busyAnimationImages {
+	static NSArray *_busyAnimationImages;
+	
+	@synchronized(self) {
+		if (!_busyAnimationImages) {
+			NSString *busyImagePath = [[[NSBundle mainBundle] resourcePath]
+																 stringByAppendingPathComponent:@"busy%d.png"];
+			NSMutableArray *tmp = [NSMutableArray arrayWithCapacity:15];
+			for (NSUInteger index = 1; index <= 16; index++) {
+				[tmp addObject:[UIImage imageWithContentsOfFile:
+												[NSString stringWithFormat:busyImagePath, index]]];
+			}
+			_busyAnimationImages = [tmp copy];
+		}
+	}
+	
+	return _busyAnimationImages;
+}
+
+#pragma mark -
+#pragma mark Accessors
+
+- (void)setApp:(ARAppStoreApplication *)anApp
+{
+	if (app != anApp)
+	{
+		[app release];
+		app = [anApp retain];
+	}
+	
+	if (app) {
+		// Configure the cell
+		if (app.name==nil || [app.name length]==0)
+			self.textLabel.text = app.appIdentifier;
+		else
+			self.textLabel.text = app.name;
+		
+		if (app.company)
+			self.detailTextLabel.text = app.company;
+		else
+			self.detailTextLabel.text = @"Waiting for first update";
+		
+		if (app.appIcon) {
+			self.imageView.image = app.appIcon;
+		} else if (!app.appIconURL) {
+			self.imageView.image = [[self class] unknownIcon];
+		} else {
+			// HACK: set image, otherwise the animation do not show.
+			self.imageView.image = [[[self class] busyAnimationImages] objectAtIndex:0];
+			self.imageView.animationImages = [[self class] busyAnimationImages];
+			[self.imageView startAnimating];
+		}
+		
+		self.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+	}
+}
+
 @end
+

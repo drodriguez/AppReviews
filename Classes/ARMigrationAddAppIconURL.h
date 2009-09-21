@@ -31,20 +31,11 @@
 //	OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#import <UIKit/UIKit.h>
+#import <Foundation/Foundation.h>
+#import "FMDB/FmdbMigration.h"
 
-@class ARAppStoreApplication;
 
-@interface ARAppStoreApplicationTableCell : UITableViewCell {
-	ARAppStoreApplication *app;
+@interface ARMigrationAddAppIconURL : FmdbMigration
+{
 }
-
-@property (nonatomic, retain) ARAppStoreApplication *app;
-
-- (id)initWithApplication:(ARAppStoreApplication *)app
-					reuseIdentifier:(NSString *)reuseIdentifier;
-
-- (void)tableView:(UITableView *)tableView
-willDisplayCellForRowAtIndexPath:(NSIndexPath *)indexPath;
-
 @end

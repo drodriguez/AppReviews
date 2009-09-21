@@ -34,31 +34,25 @@
 #import "ARAppReviewsStore.h"
 #import "ARAppStoreApplication.h"
 #import "ARAppStoreUpdateOperation.h"
-#import "ARAppIconDownloadOperation.h"
 #import "ARAppStore.h"
 #import "ARAppStoreApplicationDetails.h"
 #import "FMDatabase.h"
 #import "AppReviewsAppDelegate.h"
 #import "PSLog.h"
-#import "NSString+PSPathAdditions.h"
 
 
 @interface ARAppStoreApplication ()
 
 @property (nonatomic, retain) FMDatabase *database;
 
-- (UIImage *)loadIconFromCache;
-- (NSString *)pathInCache;
-- (void)removeIconFromCache;
-
-+ (NSString *)cacheDirectoryPath;
+- (void)removeAppIcon;
 
 @end
 
 
 @implementation ARAppStoreApplication
 
-@synthesize name, company, appIdentifier, defaultStoreIdentifier, appIconURL, appIcon, position, primaryKey, database, updateOperationsCount;
+@synthesize name, company, appIdentifier, defaultStoreIdentifier, position, primaryKey, database, updateOperationsCount, appIcon;
 
 - (id)init
 {
@@ -84,12 +78,11 @@
 		self.company = inCompany;
 		self.appIdentifier = inAppIdentifier;
 		self.defaultStoreIdentifier = inStoreIdentifier;
-		self.appIconURL = nil;
-		appIcon = nil;
 		self.position = -1;
 		self.database = nil;
 		updateOperationsQueue = [[NSOperationQueue alloc] init];
 		updateOperationsCount = 0;
+		appIcon = nil;
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updatedOperationEnded:) name:kARAppStoreUpdateOperationDidFinishNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updatedOperationEnded:) name:kARAppStoreUpdateOperationDidFailNotification object:nil];
 	}
@@ -103,10 +96,9 @@
 	[company release];
 	[appIdentifier release];
 	[defaultStoreIdentifier release];
-	[appIconURL release];
-	[appIcon release];
 	[database release];
 	[updateOperationsQueue release];
+	[appIcon release];
 	[super dealloc];
 }
 
@@ -135,6 +127,7 @@
 		hydrated = NO;
 		updateOperationsQueue = [[NSOperationQueue alloc] init];
 		updateOperationsCount = 0;
+		appIcon = nil;
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updatedOperationEnded:) name:kARAppStoreUpdateOperationDidFinishNotification object:nil];
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updatedOperationEnded:) name:kARAppStoreUpdateOperationDidFailNotification object:nil];
     }
@@ -145,8 +138,8 @@
 - (void)insertIntoDatabase:(FMDatabase *)db
 {
 	self.database = db;
-	if ([db executeUpdate:@"INSERT INTO application (name, company, app_identifier, default_store_identifier, app_icon_url, position) VALUES (?,?,?,?,?,?)",
-		 name, company, appIdentifier, defaultStoreIdentifier, appIconURL, [NSNumber numberWithInteger:position]])
+	if ([db executeUpdate:@"INSERT INTO application (name, company, app_identifier, default_store_identifier, position) VALUES (?,?,?,?,?)",
+		 name, company, appIdentifier, defaultStoreIdentifier, [NSNumber numberWithInteger:position]])
 	{
 		primaryKey = [db lastInsertRowId];
 	}
@@ -167,7 +160,7 @@
 {
     if (dirty)
 	{
-		if (![database executeUpdate:@"UPDATE application SET name=?, company=?, app_identifier=?, default_store_identifier=?, app_icon_url=?, position=? WHERE id=?", name, company, appIdentifier, defaultStoreIdentifier, appIconURL, [NSNumber numberWithInteger:position], [NSNumber numberWithInteger:primaryKey]])
+		if (![database executeUpdate:@"UPDATE application SET name=?, company=?, app_identifier=?, default_store_identifier=?, position=? WHERE id=?", name, company, appIdentifier, defaultStoreIdentifier, [NSNumber numberWithInteger:position], [NSNumber numberWithInteger:primaryKey]])
 		{
 			NSString *message = [NSString stringWithFormat:@"Failed to save ARAppStoreApplication with message '%@'.", [database lastErrorMessage]];
 			PSLogError(message);
@@ -186,13 +179,12 @@
     if (hydrated)
 		return;
 
-	FMResultSet *row = [database executeQuery:@"SELECT name, company, default_store_identifier, app_icon_url FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
+	FMResultSet *row = [database executeQuery:@"SELECT name, company, default_store_identifier FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]];
 	if (row && [row next])
 	{
 		self.name = [row stringForColumnIndex:0];
 		self.company = [row stringForColumnIndex:1];
 		self.defaultStoreIdentifier = [row stringForColumnIndex:2];
-		self.appIconURL = [row stringForColumnIndex:3];
 	}
 	else
 	{
@@ -200,7 +192,6 @@
 		self.name = nil;
 		self.company = nil;
 		self.defaultStoreIdentifier = kDefaultStoreId;
-		self.appIconURL = nil;
 	}
 	[row close];
 
@@ -214,36 +205,35 @@
 	// Write any changes to the database.
 	[self save];
 
-	// Release member variables to reclaim memory. Set to nil to avoid over-releasing them
-	// if dehydrate is called multiple times.
+    // Release member variables to reclaim memory. Set to nil to avoid over-releasing them
+    // if dehydrate is called multiple times.
 	[name release];
 	name = nil;
 	[company release];
 	company = nil;
 	[defaultStoreIdentifier release];
 	defaultStoreIdentifier = nil;
-	[appIconURL release];
-	appIconURL = nil;
-	[appIcon release];
-	appIcon = nil;
-	// Update the object state with respect to hydration.
-	hydrated = NO;
+    // Update the object state with respect to hydration.
+    hydrated = NO;
 }
 
 // Remove the object completely from the database. In memory deletion to follow...
 - (void)deleteFromDatabase
 {
-	if (![database executeUpdate:@"DELETE FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]])
+	if ([database executeUpdate:@"DELETE FROM application WHERE id=?", [NSNumber numberWithInteger:primaryKey]])
 	{
+		// App successfully deleted from database.
+
+		// Delete the cached app icon.
+		[self removeAppIcon];
+	}
+	else
+	{
+		// Failed to delete app from database.
 		NSString *message = [NSString stringWithFormat:@"Failed to delete ARAppStoreApplication with message '%@'.", [database lastErrorMessage]];
 		PSLogError(message);
 		NSAssert(0, message);
 	}
-	else
-	{
-		[self removeIconFromCache];
-	}
-
 }
 
 - (NSComparisonResult)compareByPosition:(ARAppStoreApplication *)other
@@ -326,103 +316,86 @@
 	}
 }
 
-- (void)startDownloadingIcon
+
+#pragma mark -
+#pragma mark App icon cache
+
+- (UIImage *)appIcon
 {
-	if (!downloader) {
-		downloader = [[ARAppIconDownloadOperation alloc] initWithApplication:self];
-		
-		AppReviewsAppDelegate* appDelegate = [[UIApplication sharedApplication]
-																					delegate];
-		
-		[[NSNotificationCenter defaultCenter] addObserver:self
-																						 selector:@selector(iconDownloadFinished:)
-																								 name:kARAppIconDownloadOperationDidFinishNotification
-																							 object:downloader];
-		[[NSNotificationCenter defaultCenter] addObserver:self
-																						 selector:@selector(iconDownloadFinished:)
-																								 name:kARAppIconDownloadOperationDidFailNotification
-																							 object:downloader];
-		
-		[appDelegate.operationQueue addOperation:downloader];
+	// If we have already loaded this app's icon from the cache just return it.
+	if (appIcon)
+	{
+		return appIcon;
 	}
-}
-
-- (void)cancelIconDownload
-{
-	if (downloader) {
-		[downloader cancel];
-		[downloader release];
-		downloader = nil;
-	}
-}
-
-- (void)iconDownloadFinished:(NSNotification *)notification
-{
-	[downloader release];
-	downloader = nil;
-}
-
-- (UIImage *)loadIconFromCache {
-	UIImage *result = nil;
-	
-	NSString *pathInCache = [self pathInCache];
-	NSFileManager *fileMgr = [NSFileManager defaultManager];
-	if ([fileMgr fileExistsAtPath:pathInCache]) {
-		result = [UIImage imageWithContentsOfFile:pathInCache];
-	}
-	
-	return result;
-}
-
-- (NSString *)pathInCache {
-	NSString *fileName = [NSString stringWithFormat:@"%d-%@.png",
-												self.primaryKey,
-												self.appIdentifier];
-	return [[ARAppStoreApplication cacheDirectoryPath]
-					stringByAppendingPathComponent:fileName];
-}
-
-- (void)removeIconFromCache {
-	NSString *pathInCache = [self pathInCache];
-	
-	NSFileManager *fileMgr = [NSFileManager defaultManager];
-	if ([fileMgr fileExistsAtPath:pathInCache]) {
-		NSError *error = nil;
-		[fileMgr removeItemAtPath:pathInCache error:&error];
-		
-		if (error) {
-			PSLogError(@"Error removing image from cache %@", error);
-			// Probably the application will crash after this, but we will get
-			// a crash report about it.
+	else
+	{
+		// No icon has been loaded yet, try to load it from the cache.
+		NSString *pathInCache = [ARAppStoreApplication appIconPathForAppIdentifier:self.appIdentifier];
+		NSFileManager *fileMgr = [NSFileManager defaultManager];
+		if ([fileMgr fileExistsAtPath:pathInCache])
+		{
+			appIcon = [[UIImage imageWithContentsOfFile:pathInCache] retain];
+			if (appIcon)
+			{
+				return appIcon;
+			}
 		}
 	}
+
+	return [UIImage imageNamed:@"unknownicon.png"];
 }
 
-+ (NSString *)cacheDirectoryPath {
++ (NSString *)appIconCachePath
+{
 	static NSString *_cacheDirectoryPath = nil;
-	
-	if (!_cacheDirectoryPath) {
-		_cacheDirectoryPath = [[[NSString cachesPath]
-														stringByAppendingPathComponent:@"AppStoreApplicationIcons"]
-													 retain];
+
+	if (!_cacheDirectoryPath)
+	{
+		_cacheDirectoryPath = [[[NSString cachesPath] stringByAppendingPathComponent:@"AppStoreApplicationIcons"] retain];
 		NSFileManager *fileMgr = [NSFileManager defaultManager];
 		BOOL dir = NO;
-		if (![fileMgr fileExistsAtPath:_cacheDirectoryPath
-											 isDirectory:&dir] || !dir) {
+		if (![fileMgr fileExistsAtPath:_cacheDirectoryPath isDirectory:&dir] || !dir)
+		{
 			NSError *error = nil;
-			[[NSFileManager defaultManager] createDirectoryAtPath:_cacheDirectoryPath
-																withIntermediateDirectories:YES
-																								 attributes:nil
-																											error:&error];
-			if (error) {
+			[fileMgr createDirectoryAtPath:_cacheDirectoryPath withIntermediateDirectories:YES attributes:nil error:&error];
+			if (error)
+			{
 				PSLogError(@"Error creating cache directory %@", error);
 				// Probably there will be a crash after this.
 			}
 		}
 	}
-	
-	return _cacheDirectoryPath;	
+
+	return _cacheDirectoryPath;
 }
+
++ (NSString *)appIconPathForAppIdentifier:(NSString *)identifier
+{
+	NSString *fileName = [NSString stringWithFormat:@"%@.png", identifier];
+	return [[ARAppStoreApplication appIconCachePath] stringByAppendingPathComponent:fileName];
+}
+
+- (void)removeAppIcon
+{
+	NSString *pathInCache = [ARAppStoreApplication appIconPathForAppIdentifier:self.appIdentifier];
+
+	NSFileManager *fileMgr = [NSFileManager defaultManager];
+	if ([fileMgr fileExistsAtPath:pathInCache])
+	{
+		NSError *error = nil;
+		[fileMgr removeItemAtPath:pathInCache error:&error];
+
+		if (error)
+		{
+			PSLogError(@"Error removing image from cache %@", error);
+		}
+	}
+
+	// Release our instance of the cached icon (it will be reloaded if needed again).
+	[appIcon release];
+	appIcon = nil;
+}
+
 
 #pragma mark -
 #pragma mark Accessors
@@ -475,18 +448,6 @@
     defaultStoreIdentifier = [aString copy];
 }
 
-- (void)setAppIconURL:(NSString *)aString
-{
-	if ((!appIconURL && !aString) || (appIconURL && aString && [appIconURL isEqualToString:aString]))
-		return;
-	
-	dirty = YES;
-	[appIconURL release];
-	appIconURL = [aString copy];
-	
-	self.appIcon = nil;
-}
-
 - (void)setPosition:(NSInteger)anInt
 {
 	if (position == anInt)
@@ -494,32 +455,6 @@
 
     dirty = YES;
 	position = anInt;
-}
-
-- (UIImage *)appIcon {
-	if (appIconURL && !appIcon) {
-		appIcon = [[self loadIconFromCache] retain];
-	}
-	
-	return appIcon;
-}
-
-- (void)setAppIcon:(UIImage *)anImage
-{
-	@synchronized(self)
-	{
-		if (anImage != appIcon) {
-			[appIcon release];
-			appIcon = [anImage retain];
-			
-			// Save image to cache (remove old image)
-			[self removeIconFromCache];
-			if (appIcon) {
-				[UIImagePNGRepresentation(appIcon) writeToFile:[self pathInCache]
-																						atomically:YES];
-			}
-		}
-	}
 }
 
 @end

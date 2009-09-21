@@ -31,26 +31,21 @@
 //	OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#import <Foundation/Foundation.h>
-
-@class ARAppStoreApplication;
-
+#import "ARMigrationAddAppIconURL.h"
+#import "PSLog.h"
 
 
-extern NSString *kARAppIconDownloadOperationDidStartNotification;
-extern NSString *kARAppIconDownloadOperationDidFinishNotification;
-extern NSString *kARAppIconDownloadOperationDidFailNotification;
+@implementation ARMigrationAddAppIconURL
 
-
-@interface ARAppIconDownloadOperation : NSOperation
+- (void)up
 {
-	ARAppStoreApplication *app;
-	NSMutableData *data;
-	BOOL finished;
+	PSLog(@"Performing migration");
+	[self addColumn:[FmdbMigrationColumn columnWithColumnName:@"app_icon_url" columnType:@"TEXT"] forTableName:@"application_details"];
+	PSLog(@"Migration completed");
 }
 
-@property (nonatomic, readonly) ARAppStoreApplication *app;
-
-- (id)initWithApplication:(ARAppStoreApplication *)app;
+- (void)down
+{
+}
 
 @end

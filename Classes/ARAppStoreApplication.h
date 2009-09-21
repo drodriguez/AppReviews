@@ -32,6 +32,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "NSString+PSPathAdditions.h"
 
 
 // Default to the US store as the apps "home store" (for looking up name, company, etc).
@@ -41,7 +42,6 @@
 @class FMDatabase;
 @class ARAppStoreApplicationDetails;
 @class ARAppStoreUpdateOperation;
-@class ARAppIconDownloadOperation;
 
 
 @interface ARAppStoreApplication : NSObject
@@ -53,33 +53,30 @@
 	NSString *name;
 	NSString *company;
 	NSString *defaultStoreIdentifier;
-	NSString *appIconURL;
-	UIImage *appIcon;
-	
-	// Opaque reference to the underlying database.
-	FMDatabase *database;
-	// Primary key in the database.
-	NSInteger primaryKey;
-	// Hydrated tracks whether attribute data is in the object or the database.
-	BOOL hydrated;
-	// Dirty tracks whether there are in-memory changes to data which have no been written to the database.
-	BOOL dirty;
+
+    // Opaque reference to the underlying database.
+    FMDatabase *database;
+    // Primary key in the database.
+    NSInteger primaryKey;
+    // Hydrated tracks whether attribute data is in the object or the database.
+    BOOL hydrated;
+    // Dirty tracks whether there are in-memory changes to data which have no been written to the database.
+    BOOL dirty;
 	// NSOperationQueue for all downloads related to this app.
 	NSOperationQueue *updateOperationsQueue;
 	NSUInteger updateOperationsCount;
-	// NSOperation for downloading the icon in the background
-	ARAppIconDownloadOperation *downloader;
+	// Cached app icon.
+	UIImage *appIcon;
 }
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, copy) NSString *company;
 @property (nonatomic, copy) NSString *appIdentifier;
 @property (nonatomic, copy) NSString *defaultStoreIdentifier;
-@property (nonatomic, copy) NSString *appIconURL;
-@property (retain) UIImage *appIcon;
 @property (nonatomic, assign) NSInteger position;
 @property (nonatomic, assign, readonly) NSInteger primaryKey;
 @property (nonatomic, readonly) NSUInteger updateOperationsCount;
+@property (nonatomic, readonly) UIImage *appIcon;
 
 - (id)init;
 - (id)initWithAppIdentifier:(NSString *)inAppIdentifier;
@@ -104,8 +101,7 @@
 - (void)suspendAllOperations;
 - (void)resumeAllOperations;
 - (void)addUpdateOperation:(ARAppStoreUpdateOperation *)op;
-// Start downloading or cancel the download of this application icon.
-- (void)startDownloadingIcon;
-- (void)cancelIconDownload;
++ (NSString *)appIconCachePath;
++ (NSString *)appIconPathForAppIdentifier:(NSString *)identifier;
 
 @end

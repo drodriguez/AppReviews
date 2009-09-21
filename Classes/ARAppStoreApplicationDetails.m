@@ -704,7 +704,7 @@
 {
 	if ((!appIconURL && !aString) || (appIconURL && aString && [appIconURL isEqualToString:aString]))
 		return;
-	
+
 	dirty = YES;
 	[appIconURL release];
 	appIconURL = [aString copy];

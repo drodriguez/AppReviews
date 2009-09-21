@@ -39,6 +39,8 @@
 #import "ARAppStoreApplicationReview.h"
 #import "NSString+PSPathAdditions.h"
 #import "FMDatabase.h"
+#import "FmdbMigrationManager.h"
+#import "ARMigrationAddAppIconURL.h"
 #import "PSLog.h"
 
 
@@ -87,16 +89,28 @@ SYNTHESIZE_SINGLETON_FOR_CLASS(ARAppReviewsStore);
     if (success)
 	{
 		PSLogDebug(@"Writable database file %@ found", kARAppReviewsDatabaseFile);
-		return;
 	}
-    // The writable database does not exist, so copy the default to the appropriate location.
-	PSLogDebug(@"No writable database file found");
-    NSString *defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:kARAppReviewsDatabaseFile];
-    success = [fileManager copyItemAtPath:defaultDBPath toPath:writableDBPath error:&error];
-    if (!success)
+	else
 	{
-        NSAssert1(0, @"Failed to create writable database file with message '%@'.", [error localizedDescription]);
-    }
+		// The writable database does not exist, so copy the default to the appropriate location.
+		PSLogDebug(@"No writable database file found");
+		NSString *defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:kARAppReviewsDatabaseFile];
+		success = [fileManager copyItemAtPath:defaultDBPath toPath:writableDBPath error:&error];
+		if (!success)
+		{
+			NSAssert1(0, @"Failed to create writable database file with message '%@'.", [error localizedDescription]);
+		}
+	}
+
+	// Perform migrations.
+	if (success)
+	{
+		PSLogDebug(@"Running migrations");
+		NSArray *migrations = [NSArray arrayWithObjects:
+							   [ARMigrationAddAppIconURL migration],
+							   nil];
+		[FmdbMigrationManager executeForDatabasePath:writableDBPath withMigrations:migrations];
+	}
 }
 
 - (ARAppReviewsStore *)init

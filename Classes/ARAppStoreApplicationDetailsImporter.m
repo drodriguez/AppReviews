@@ -41,13 +41,23 @@
 #import "PSLog.h"
 
 
+@interface ARAppStoreApplicationDetailsImporter ()
+
+- (void)fetchApplicationIcon;
+- (NSData *)dataFromURL:(NSURL *)url;
++ (CGImageRef)iconMask;
++ (UIImage *)iconOutline;
+
+@end
+
+
 @implementation ARAppStoreApplicationDetailsImporter
 
 @synthesize appIdentifier, storeIdentifier, category, categoryIdentifier, ratingCountAll, ratingCountCurrent, ratingAll, ratingCurrent, reviewCountAll, reviewCountCurrent, lastSortOrder, lastUpdated;
 @synthesize released, appVersion, appSize, localPrice, appName, appCompany, companyURL, companyURLTitle, supportURL, supportURLTitle, appIconURL;
 @synthesize ratingCountAll5Stars, ratingCountAll4Stars, ratingCountAll3Stars, ratingCountAll2Stars, ratingCountAll1Star;
 @synthesize ratingCountCurrent5Stars, ratingCountCurrent4Stars, ratingCountCurrent3Stars, ratingCountCurrent2Stars, ratingCountCurrent1Star;
-@synthesize hasNewReviews, importState;
+@synthesize hasNewReviews, importState, fetchAppIcon;
 
 - (id)init
 {
@@ -92,6 +102,7 @@
 		self.lastUpdated = [NSDate distantPast];
 		self.hasNewReviews = NO;
 		self.importState = DetailsImportStateEmpty;
+		self.fetchAppIcon = NO;
 		currentString = [[NSMutableString alloc] init];
 	}
 	return self;
@@ -165,6 +176,20 @@
 	}
 
 	[xmlParser release];
+
+	// Download app icon if necessary.
+	if ((self.importState == DetailsImportStateComplete) && (self.appIconURL) && ([self.appIconURL length] > 0))
+	{
+		// We successfully found the app icon URL, see if we need to download it.
+
+		// Only download icon if fetchAppIcon is YES _OR_ the icon file is missing from the cache.
+		NSString *appIconPath = [ARAppStoreApplication appIconPathForAppIdentifier:self.appIdentifier];
+		if (self.fetchAppIcon || ![[NSFileManager defaultManager] fileExistsAtPath:appIconPath])
+		{
+			// Download icon.
+			[self fetchApplicationIcon];
+		}
+	}
 
 	[pool release];
 }
@@ -540,17 +565,19 @@
 			{
 				NSString *url = [attributeDict objectForKey:@"url"];
 				NSString *value = [attributeDict objectForKey:@"draggingName"];
-				if (value) {
+				if (value)
+				{
 					NSRange viewArtistQuery = [url rangeOfString:@"viewArtist?"];
 					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
-					if (viewArtistQuery.location != NSNotFound) {
+					if (viewArtistQuery.location != NSNotFound)
+					{
 						self.appCompany = value;
 					}
-					else if (viewSoftwareQuery.location != NSNotFound) {
+					else if (viewSoftwareQuery.location != NSNotFound)
+					{
 						self.appName = value;
 					}
-					xmlState = self.appName && self.appCompany && self.appIconURL ?
-						DetailsSeekingCategory : xmlState;
+					xmlState = (self.appName && self.appCompany && self.appIconURL) ? DetailsSeekingCategory : xmlState;
 				}
 				break;
 			}
@@ -580,14 +607,15 @@
 	}
 	else if ([elementNameLower isEqualToString:@"pictureview"])
 	{
-		switch (xmlState) {
+		switch (xmlState)
+		{
 			case DetailsSeekingAppNameAndIconAndCompanyName:
 			{
 				GTMRegex *regex = [GTMRegex regexWithPattern:@" artwork$"];
-				if ([regex matchesSubStringInString:[attributeDict objectForKey:@"alt"]]) {
+				if ([regex matchesSubStringInString:[attributeDict objectForKey:@"alt"]])
+				{
 					self.appIconURL = [attributeDict objectForKey:@"url"];
-					xmlState = self.appName && self.appCompany && self.appIconURL ?
-						DetailsSeekingCategory : xmlState;
+					xmlState = (self.appName && self.appCompany && self.appIconURL) ? DetailsSeekingCategory : xmlState;
 				}
 				break;
 			}
@@ -958,6 +986,119 @@
 			}
 		}
 	}
+}
+
+
+#pragma mark -
+#pragma mark Application icon
+
+- (void)fetchApplicationIcon
+{
+	NSURL *url = [NSURL URLWithString:self.appIconURL];
+
+	// Download icon data.
+	NSData *iconData = [self dataFromURL:url];
+	if (iconData)
+	{
+		UIImage *originalIcon = [[UIImage alloc] initWithData:iconData];
+		CGSize size = CGSizeMake(29, 29);
+		CGRect rect = CGRectMake(0, 0, 29, 29);
+		UIGraphicsBeginImageContext(size);
+		CGContextClipToMask(UIGraphicsGetCurrentContext(), rect, [[self class] iconMask]);
+		[originalIcon drawInRect:rect];
+		[[[self class] iconOutline] drawInRect:rect];
+		UIImage *result = UIGraphicsGetImageFromCurrentImageContext();
+		UIGraphicsEndImageContext();
+		[originalIcon release];
+
+		// Get a PNG representation of the final image.
+		NSData *png = UIImagePNGRepresentation(result);
+		if (png)
+		{
+			// Save resized image to file.
+			NSString *iconFilePath = [ARAppStoreApplication appIconPathForAppIdentifier:self.appIdentifier];
+			// Write image to file.
+			[png writeToFile:iconFilePath atomically:YES];
+			PSLog(@"App icon saved successfully for %@", self.appName);
+		}
+		else
+		{
+			PSLogError(@"Failed to save app icon for %@", self.appName);
+		}
+	}
+	else
+	{
+		PSLogError(@"Failed to download app icon for %@", self.appName);
+	}
+}
+
+- (NSData *)dataFromURL:(NSURL *)url
+{
+	PSLogDebug(@"url=%@", url);
+	NSData *result = nil;
+	NSURLResponse *response = nil;
+	NSError *error = nil;
+	NSMutableURLRequest *theRequest=[NSMutableURLRequest requestWithURL:url
+															cachePolicy:NSURLRequestUseProtocolCachePolicy
+														timeoutInterval:10.0];
+	[theRequest setValue:@"iTunes/4.2 (Macintosh; U; PPC Mac OS X 10.2" forHTTPHeaderField:@"User-Agent"];
+	[theRequest setValue:[NSString stringWithFormat:@" %@-1", self.storeIdentifier] forHTTPHeaderField:@"X-Apple-Store-Front"];
+
+#ifdef DEBUG
+	NSDictionary *headerFields = [theRequest allHTTPHeaderFields];
+	PSLogDebug([headerFields descriptionWithLocale:nil indent:2]);
+#endif
+
+	AppReviewsAppDelegate *appDelegate = [[UIApplication sharedApplication] delegate];
+	[appDelegate performSelectorOnMainThread:@selector(increaseNetworkUsageCount) withObject:nil waitUntilDone:YES];
+	result = [NSURLConnection sendSynchronousRequest:theRequest returningResponse:&response error:&error];
+	[appDelegate performSelectorOnMainThread:@selector(decreaseNetworkUsageCount) withObject:nil waitUntilDone:YES];
+	if (result==nil && error)
+	{
+		PSLogError(@"URL request failed with error: %@", error);
+	}
+	return result;
+}
+
++ (CGImageRef)iconMask
+{
+	static CGImageRef _iconMask = NULL;
+
+	@synchronized(self)
+	{
+		if (!_iconMask)
+		{
+			NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iconmask.png"];
+			UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
+			CGImageRef maskImageRef = [maskImage CGImage];
+			_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
+										  CGImageGetHeight(maskImageRef),
+										  CGImageGetBitsPerComponent(maskImageRef),
+										  CGImageGetBitsPerPixel(maskImageRef),
+										  CGImageGetBytesPerRow(maskImageRef),
+										  CGImageGetDataProvider(maskImageRef),
+										  NULL,
+										  false);
+		}
+	}
+
+	return _iconMask;
+}
+
++ (UIImage *)iconOutline
+{
+	static UIImage *_iconOutline = nil;
+
+	@synchronized(self)
+	{
+		if (!_iconOutline)
+		{
+			NSString *outlineImagePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iconoutline.png"];
+			_iconOutline = [[UIImage alloc] initWithContentsOfFile:outlineImagePath];
+		}
+	}
+
+	return _iconOutline;
 }
 
 @end

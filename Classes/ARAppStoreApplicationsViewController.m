@@ -36,7 +36,6 @@
 #import "ARAppReviewsStore.h"
 #import "ARAppStoreApplication.h"
 #import "AREditAppStoreApplicationViewController.h"
-#import "ARAppStoreApplicationTableCell.h"
 #import "AppReviewsAppDelegate.h"
 #import "PSAboutViewController.h"
 #import "PSLog.h"
@@ -155,6 +154,7 @@
 	[[self navigationController] pushViewController:aboutView animated:YES];
 }
 
+
 #pragma mark -
 #pragma mark UITableViewDelegate methods
 
@@ -188,14 +188,6 @@
 	[self.navigationController pushViewController:self.appStoreCountriesViewController animated:YES];
 }
 
-- (void)tableView:(UITableView *)tableView
-	willDisplayCell:(UITableViewCell *)cell
-forRowAtIndexPath:(NSIndexPath *)indexPath
-{
-	[(ARAppStoreApplicationTableCell *)cell tableView:tableView
-										willDisplayCellForRowAtIndexPath:indexPath];
-}
-
 
 
 #pragma mark -
@@ -215,21 +207,31 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-	static NSString *CellIdentifier = @"AppCell";
+    static NSString *CellIdentifier = @"AppCell";
 
-	ARAppStoreApplicationTableCell *cell =
-		(ARAppStoreApplicationTableCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-	ARAppStoreApplication *app = [[ARAppReviewsStore sharedInstance] applicationAtIndex:indexPath.row];
-  if (cell == nil)
+	// Obtain the cell.
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    if (cell == nil)
 	{
-		cell = [[[ARAppStoreApplicationTableCell alloc] initWithApplication:app
-																												reuseIdentifier:CellIdentifier]
-						autorelease];
-	} else {
-		cell.app = app;
-	}
+        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
+    }
 
-	return cell;
+    // Configure the cell.
+	ARAppStoreApplication *app = [[ARAppReviewsStore sharedInstance] applicationAtIndex:indexPath.row];
+	if (app.name==nil || [app.name length]==0)
+		cell.textLabel.text = app.appIdentifier;
+	else
+		cell.textLabel.text = app.name;
+
+	if (app.company)
+		cell.detailTextLabel.text = app.company;
+	else
+		cell.detailTextLabel.text = @"Waiting for first update";
+
+	cell.imageView.image = [app appIcon];
+	cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+
+    return cell;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath
@@ -287,3 +289,4 @@ forRowAtIndexPath:(NSIndexPath *)indexPath
 }
 
 @end
+

@@ -91,6 +91,7 @@
 			// Downloaded OK, now parse XML data.
 			if (![self isCancelled])
 			{
+				detailsImporter.fetchAppIcon = YES;
 				[detailsImporter processDetails:data];
 				if (detailsImporter.importState != DetailsImportStateComplete)
 					success = NO;

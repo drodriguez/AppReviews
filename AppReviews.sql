@@ -5,7 +5,6 @@ CREATE TABLE "application"
     "company" TEXT,
     "app_identifier" TEXT NOT NULL,
     "default_store_identifier" TEXT NOT NULL,
-		"app_icon_url" TEXT,
     "position" INTEGER DEFAULT -1
 );
 

@@ -21,3 +21,7 @@ UIColor MoreColors category
 Created by Jeff LaMarche:
 
 [http://iphonedevelopment.blogspot.com](http://iphonedevelopment.blogspot.com)
+
+Other contributors
+------------------
+Daniel Rodríguez Troitiño

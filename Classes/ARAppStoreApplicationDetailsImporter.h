@@ -170,6 +170,7 @@ typedef enum
 	DetailsImportState importState;
 
 	// Members used during XML parsing.
+	BOOL fetchAppIcon;
 	DetailsXMLState xmlState;
 	BOOL skippingCollapsedDisclosure;
 	BOOL multipleVersions;
@@ -211,6 +212,7 @@ typedef enum
 @property (nonatomic, copy) NSString *appIconURL;
 @property (nonatomic, assign) BOOL hasNewReviews;
 @property (nonatomic, assign) DetailsImportState importState;
+@property (nonatomic, assign) BOOL fetchAppIcon;
 
 - (id)initWithAppIdentifier:(NSString *)inAppIdentifier storeIdentifier:(NSString *)inStoreIdentifier;
 - (NSURL *)detailsURL;

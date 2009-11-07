@@ -567,8 +567,8 @@
 				NSString *value = [attributeDict objectForKey:@"draggingName"];
 				if (value)
 				{
-					NSRange viewArtistQuery = [url rangeOfString:@"viewArtist?"];
-					NSRange viewSoftwareQuery = [url rangeOfString:@"viewSoftware?"];
+					NSRange viewArtistQuery = [url rangeOfString:@"/artist/"];
+					NSRange viewSoftwareQuery = [url rangeOfString:@"/app/"];
 					if (viewArtistQuery.location != NSNotFound)
 					{
 						self.appCompany = value;
@@ -675,7 +675,7 @@
 			{
 				if ([elementNameLower isEqualToString:@"pathelement"])
 				{
-					GTMRegex *regex = [GTMRegex regexWithPattern:@".*/viewGenre[?]id=([0-9][0-9][0-9][0-9]+).*"];
+					GTMRegex *regex = [GTMRegex regexWithPattern:@".*/genre/mobile-software-applications/id([0-9][0-9][0-9][0-9]+).*"];
 					NSArray *substrings = [regex subPatternsOfString:currentString];
 					if (([substrings count] > 0) && ([substrings objectAtIndex:0] != [NSNull null]) && ([substrings objectAtIndex:1] != [NSNull null]))
 					{
@@ -711,7 +711,7 @@
 				else
 					self.released = @"";
 				[currentString setString:@""];
-				xmlState = DetailsSeekingCopyright;
+				xmlState = DetailsSeekingVersion;
 				break;
 			}
 			case DetailsReadingCopyright:
@@ -720,7 +720,7 @@
 				if ([currentString hasPrefix:@"Seller: "])
 					xmlState = DetailsSeekingCopyright;
 				else
-					xmlState = DetailsSeekingVersion;
+					xmlState = DetailsSeekingSize;
 				[currentString setString:@""];
 				break;
 			case DetailsReadingVersion:
@@ -736,7 +736,7 @@
 				else
 					self.appVersion = @"";
 				[currentString setString:@""];
-				xmlState = DetailsSeekingSize;
+				xmlState = DetailsSeekingCopyright;
 				break;
 			}
 			case DetailsReadingSize:

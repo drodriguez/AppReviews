@@ -49,6 +49,7 @@
 	NSString *websiteURL;
 	NSString *appURL;
 	NSString *releaseNotesURL;
+	NSString *twitterName;
 	NSString *email;
 	NSString *appId;
 	CGFloat applicationNameFontSize;

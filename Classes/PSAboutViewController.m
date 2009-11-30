@@ -36,8 +36,9 @@
 #import "PSLog.h"
 
 
-#define kOpenWebsiteURLTagValue			1
-#define kOpenReleaseNotesURLTagValue	2
+#define kOpenWebsiteURLTagValue         1
+#define kOpenReleaseNotesURLTagValue    2
+#define kOpenTwitterURLTagValue         3
 
 
 typedef enum
@@ -47,6 +48,7 @@ typedef enum
 	PSAboutCopyrightRow,
 	PSAboutCreditsRow,
 	PSAboutWebsiteRow,
+	PSAboutTwitterRow,
 	PSAboutFeedbackEmailRow,
 	PSAboutRecommendEmailRow
 } PSAboutRow;
@@ -62,6 +64,7 @@ typedef enum
 @property (nonatomic, retain) NSString *websiteURL;
 @property (nonatomic, retain) NSString *appURL;
 @property (nonatomic, retain) NSString *releaseNotesURL;
+@property (nonatomic, retain) NSString *twitterName;
 @property (nonatomic, retain) NSString *email;
 @property (nonatomic, retain) NSString *appId;
 @property (nonatomic, retain) NSMutableArray *rowTypes;
@@ -74,7 +77,7 @@ typedef enum
 
 @implementation PSAboutViewController
 
-@synthesize appName, appIcon, appVersion, copyright, creditsURL, websiteURL, appURL, releaseNotesURL, email, appId, applicationNameFontSize, parentViewForConfirmation, rowTypes;
+@synthesize appName, appIcon, appVersion, copyright, creditsURL, websiteURL, appURL, releaseNotesURL, twitterName, email, appId, applicationNameFontSize, parentViewForConfirmation, rowTypes;
 
 
 /**
@@ -128,6 +131,7 @@ typedef enum
 	self.websiteURL = [self infoValueForKey:@"PSWebsiteURL"];
 	self.appURL = [self infoValueForKey:@"PSApplicationURL"];
 	self.releaseNotesURL = [self infoValueForKey:@"PSReleaseNotesURL"];
+	self.twitterName = [self infoValueForKey:@"PSTwitterName"];
 	self.email = [self infoValueForKey:@"PSContactEmail"];
 	self.appId = [self infoValueForKey:@"PSApplicationID"];
 	NSString *iconFilePath = [self pathForIcon];
@@ -149,6 +153,9 @@ typedef enum
 	// Optional website row.
 	if (self.websiteURL && [self.websiteURL length]>0)
 		[rowTypes addObject:[NSNumber numberWithInteger:PSAboutWebsiteRow]];
+	// Optional twitter row.
+	if (self.twitterName && [self.twitterName length]>0)
+		[rowTypes addObject:[NSNumber numberWithInteger:PSAboutTwitterRow]];
 	// Optional feedback row.
 	if (self.email && [self.email length]>0)
 		[rowTypes addObject:[NSNumber numberWithInteger:PSAboutFeedbackEmailRow]];
@@ -169,6 +176,7 @@ typedef enum
 	self.websiteURL = nil;
 	self.appURL = nil;
 	self.releaseNotesURL = nil;
+	self.twitterName = nil;
 	self.email = nil;
 	self.appId = nil;
 	self.appIcon = nil;
@@ -189,6 +197,7 @@ typedef enum
 	[websiteURL release];
 	[appURL release];
 	[releaseNotesURL release];
+	[twitterName release];
 	[email release];
 	[appId release];
 	[parentViewForConfirmation release];
@@ -253,6 +262,7 @@ typedef enum
 		case PSAboutVersionRow:
 		case PSAboutCreditsRow:
 		case PSAboutWebsiteRow:
+		case PSAboutTwitterRow:
 		case PSAboutFeedbackEmailRow:
 		case PSAboutRecommendEmailRow:
 			return indexPath;
@@ -297,6 +307,12 @@ typedef enum
 		{
 			sheet = [[UIActionSheet alloc] initWithTitle:websiteURL delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Visit Website", @"Visit Website"), nil];
 			sheet.tag = kOpenWebsiteURLTagValue;
+			break;
+		}
+		case PSAboutTwitterRow:
+		{
+			sheet = [[UIActionSheet alloc] initWithTitle:[NSString stringWithFormat:@"@%@", twitterName] delegate:self cancelButtonTitle:NSLocalizedString(@"Cancel", @"Cancel") destructiveButtonTitle:nil otherButtonTitles:NSLocalizedString(@"Visit Twitter", @"Visit Twitter"), nil];
+			sheet.tag = kOpenTwitterURLTagValue;
 			break;
 		}
 		case PSAboutVersionRow:
@@ -520,6 +536,21 @@ typedef enum
 			cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
 			break;
 		}
+		case PSAboutTwitterRow:
+		{
+			// Obtain the cell.
+			cell = [tableView dequeueReusableCellWithIdentifier:kPSTitleValueTableCellID];
+			if (cell == nil)
+			{
+				cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:kPSTitleValueTableCellID] autorelease];
+			}
+			// Configure the cell.
+			cell.selectionStyle = UITableViewCellSelectionStyleBlue;
+			cell.textLabel.text = NSLocalizedString(@"Twitter", @"Twitter");
+			cell.detailTextLabel.text = [NSString stringWithFormat:@"@%@", twitterName];
+			cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+			break;
+		}
 		case PSAboutFeedbackEmailRow:
 		{
 			// Obtain the cell.
@@ -583,11 +614,26 @@ typedef enum
 				{
 					// No URL scheme was specified, so assume http://
 					url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@", websiteURL]];
-					if (url)
-					{
-						PSLogDebug(@"Opening URL: %@", [url description]);
-						[[UIApplication sharedApplication] openURL:url];
-					}
+				}
+
+				if (url)
+				{
+					PSLogDebug(@"Opening URL: %@", [url description]);
+					[[UIApplication sharedApplication] openURL:url];
+				}
+			}
+			break;
+		}
+		case kOpenTwitterURLTagValue:
+		{
+			if (buttonIndex == 0)
+			{
+				// Ensure app data is saved before app quits.
+				url = [NSURL URLWithString:[NSString stringWithFormat:@"http://twitter.com/%@", twitterName]];
+				if (url)
+				{
+					PSLogDebug(@"Opening URL: %@", [url description]);
+					[[UIApplication sharedApplication] openURL:url];
 				}
 			}
 			break;
@@ -602,11 +648,12 @@ typedef enum
 				{
 					// No URL scheme was specified, so assume http://
 					url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@", releaseNotesURL]];
-					if (url)
-					{
-						PSLogDebug(@"Opening URL: %@", [url description]);
-						[[UIApplication sharedApplication] openURL:url];
-					}
+				}
+
+				if (url)
+				{
+					PSLogDebug(@"Opening URL: %@", [url description]);
+					[[UIApplication sharedApplication] openURL:url];
 				}
 			}
 			break;

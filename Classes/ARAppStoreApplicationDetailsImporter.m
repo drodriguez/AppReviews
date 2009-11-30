@@ -611,7 +611,7 @@
 		{
 			case DetailsSeekingAppNameAndIconAndCompanyName:
 			{
-				GTMRegex *regex = [GTMRegex regexWithPattern:@" artwork$"];
+				GTMRegex *regex = [GTMRegex regexWithPattern:@"artwork$"];
 				if ([regex matchesSubStringInString:[attributeDict objectForKey:@"alt"]])
 				{
 					self.appIconURL = [attributeDict objectForKey:@"url"];

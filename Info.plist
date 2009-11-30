@@ -21,7 +21,7 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>1.5.1</string>
+	<string>1.5.2</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
@@ -36,5 +36,7 @@
 	<string>www.perculasoft.com/appreviews/releases.html</string>
 	<key>PSAboutIconFile</key>
 	<string>About.png</string>
+	<key>PSTwitterName</key>
+	<string>appreviewsapp</string>
 </dict>
 </plist>

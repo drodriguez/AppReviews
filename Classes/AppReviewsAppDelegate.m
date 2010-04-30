@@ -158,7 +158,10 @@
 	{
 		NSString *key = [setting objectForKey:@"Key"];
 		if (key)
-			[defaults setObject:[setting objectForKey:@"DefaultValue"] forKey:key];
+		{
+			id value = ([tmpSettings objectForKey:key] ? [tmpSettings objectForKey:key] : [setting objectForKey:@"DefaultValue"]);
+			[defaults setObject:value forKey:key];
+		}
 	}
 
 	// Persist the newly initialized default settings and reload them.

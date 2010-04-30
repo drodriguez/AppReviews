@@ -300,6 +300,7 @@ SYNTHESIZE_SINGLETON_FOR_CLASS(ARAppReviewsStore);
 
 - (ARAppStoreApplicationDetails *)detailsForApplication:(ARAppStoreApplication *)app inStore:(ARAppStore *)store
 {
+	ARAppStoreApplicationDetails *details = nil;
 	NSMutableDictionary *storeDetailsDictionary = [appDetails objectForKey:app.appIdentifier];
 	if (storeDetailsDictionary == nil)
 	{
@@ -309,9 +310,19 @@ SYNTHESIZE_SINGLETON_FOR_CLASS(ARAppReviewsStore);
 	}
 
 	if (storeDetailsDictionary)
-		return [storeDetailsDictionary objectForKey:store.storeIdentifier];
+	{
+		details = [storeDetailsDictionary objectForKey:store.storeIdentifier];
+		if (details == nil)
+		{
+			// ARAppStoreApplicationDetails didn't exist for this app in this store - could be a newly added store, create it now.
+			details = [[ARAppStoreApplicationDetails alloc] initWithAppIdentifier:app.appIdentifier storeIdentifier:store.storeIdentifier];
+			[details insertIntoDatabase:database];
+			[storeDetailsDictionary setObject:details forKey:store.storeIdentifier];
+			[details release];
+		}
+	}
 
-	return nil;
+	return details;
 }
 
 - (void)removeDetailsForApplication:(ARAppStoreApplication *)app

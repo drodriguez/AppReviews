@@ -38,7 +38,7 @@
 
 @interface AppReviewsAppDelegate (Private)
 
-- (NSUserDefaults *)loadUserSettings:(NSString *)aKey;
+- (NSUserDefaults *)loadUserSettings;
 
 @end
 
@@ -51,7 +51,7 @@
 {
 	if (self = [super init])
 	{
-		self.settings = [self loadUserSettings:@"143441"];
+		self.settings = [self loadUserSettings];
 		self.operationQueue = [[[NSOperationQueue alloc] init] autorelease];
 		networkUsageCount = 0;
 		self.exiting = NO;
@@ -144,30 +144,26 @@
     [super dealloc];
 }
 
-- (NSUserDefaults *)loadUserSettings:(NSString *)aKey
+- (NSUserDefaults *)loadUserSettings
 {
-	// Load user settings.
+	// Load user settings based on the contents of the the settings bundle.
+
 	NSUserDefaults *tmpSettings = [NSUserDefaults standardUserDefaults];
-	if (![tmpSettings stringForKey:aKey])
+	NSString *bundle = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Settings.bundle/Root.plist"];
+	NSDictionary *plist = [[NSDictionary dictionaryWithContentsOfFile:bundle] objectForKey:@"PreferenceSpecifiers"];
+	NSMutableDictionary *defaults = [NSMutableDictionary dictionary];
+
+	// Loop through the bundle settings preferences and pull out the key/default pairs.
+	for (NSDictionary* setting in plist)
 	{
-		// The settings haven't been initialized, so manually init them based on
-		// the contents of the the settings bundle.
-		NSString *bundle = [[[NSBundle mainBundle] bundlePath] stringByAppendingPathComponent:@"Settings.bundle/Root.plist"];
-		NSDictionary *plist = [[NSDictionary dictionaryWithContentsOfFile:bundle] objectForKey:@"PreferenceSpecifiers"];
-		NSMutableDictionary *defaults = [NSMutableDictionary dictionary];
-
-		// Loop through the bundle settings preferences and pull out the key/default pairs.
-		for (NSDictionary* setting in plist)
-		{
-			NSString *key = [setting objectForKey:@"Key"];
-			if (key)
-				[defaults setObject:[setting objectForKey:@"DefaultValue"] forKey:key];
-		}
-
-		// Persist the newly initialized default settings and reload them.
-		[tmpSettings setPersistentDomain:defaults forName:[[NSBundle mainBundle] bundleIdentifier]];
-		tmpSettings = [NSUserDefaults standardUserDefaults];
+		NSString *key = [setting objectForKey:@"Key"];
+		if (key)
+			[defaults setObject:[setting objectForKey:@"DefaultValue"] forKey:key];
 	}
+
+	// Persist the newly initialized default settings and reload them.
+	[tmpSettings setPersistentDomain:defaults forName:[[NSBundle mainBundle] bundleIdentifier]];
+	tmpSettings = [NSUserDefaults standardUserDefaults];
 
 	return tmpSettings;
 }

@@ -1001,8 +1001,9 @@
 	if (iconData)
 	{
 		UIImage *originalIcon = [[UIImage alloc] initWithData:iconData];
-		CGSize size = CGSizeMake(29, 29);
-		CGRect rect = CGRectMake(0, 0, 29, 29);
+		CGFloat scale = [UIScreen instancesRespondToSelector:@selector(scale)] ? [[UIScreen mainScreen] scale] : 1.0;
+		CGSize size = CGSizeMake(29 * scale, 29 * scale);
+		CGRect rect = CGRectMake(0, 0, 29 * scale, 29 * scale);
 		UIGraphicsBeginImageContext(size);
 		CGContextClipToMask(UIGraphicsGetCurrentContext(), rect, [[self class] iconMask]);
 		[originalIcon drawInRect:rect];
@@ -1068,8 +1069,7 @@
 	{
 		if (!_iconMask)
 		{
-			NSString *maskImagePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iconmask.png"];
-			UIImage *maskImage = [UIImage imageWithContentsOfFile:maskImagePath];
+			UIImage *maskImage = [UIImage imageNamed:@"iconmask.png"];
 			CGImageRef maskImageRef = [maskImage CGImage];
 			_iconMask = CGImageMaskCreate(CGImageGetWidth(maskImageRef),
 										  CGImageGetHeight(maskImageRef),
@@ -1093,8 +1093,7 @@
 	{
 		if (!_iconOutline)
 		{
-			NSString *outlineImagePath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"iconoutline.png"];
-			_iconOutline = [[UIImage alloc] initWithContentsOfFile:outlineImagePath];
+			_iconOutline = [[UIImage imageNamed:@"iconoutline.png"] retain];
 		}
 	}
 

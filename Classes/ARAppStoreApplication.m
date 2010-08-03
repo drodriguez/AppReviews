@@ -337,6 +337,10 @@
 			appIcon = [[UIImage imageWithContentsOfFile:pathInCache] retain];
 			if (appIcon)
 			{
+				if ([UIScreen instancesRespondToSelector:@selector(scale)] && [[UIScreen mainScreen] scale] == 2.0) {
+					[appIcon autorelease];
+					appIcon = [[UIImage imageWithCGImage:appIcon.CGImage scale:2.0 orientation:UIImageOrientationUp] retain];
+				}
 				return appIcon;
 			}
 		}
